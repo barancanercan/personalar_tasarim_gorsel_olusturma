@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona Görsel Oluşturucu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .persona-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background-color: #f7fafc;
+        }
+        .persona-section h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .persona-section button {
+            background-color: #4c51bf;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .persona-section button:hover {
+            background-color: #3e489c;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #4c51bf;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-top: 15px;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .persona-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Persona Görsel Oluşturucu</h1>
+
+        <!-- Persona 1: Geleneksel Muhafazakar Çekirdek -->
+        <div class="persona-section">
+            <h2>Geleneksel Muhafazakar Çekirdek</h2>
+            <button onclick="generateImage('traditional-conservative')">Görsel Oluştur</button>
+            <div id="loading-traditional-conservative" class="loading-spinner"></div>
+            <img id="image-traditional-conservative" class="persona-image" style="display:none;" alt="Geleneksel Muhafazakar Çekirdek Personası">
+        </div>
+
+        <!-- Persona 2: Kentli Laik Modernler -->
+        <div class="persona-section">
+            <h2>Kentli Laik Modernler</h2>
+            <button onclick="generateImage('urban-secular-moderns')">Görsel Oluştur</button>
+            <div id="loading-urban-secular-moderns" class="loading-spinner"></div>
+            <img id="image-urban-secular-moderns" class="persona-image" style="display:none;" alt="Kentli Laik Modernler Personası">
+        </div>
+
+        <!-- Persona 3: Ekonomik Kaygılı Milliyetçiler -->
+        <div class="persona-section">
+            <h2>Ekonomik Kaygılı Milliyetçiler</h2>
+            <button onclick="generateImage('economically-concerned-nationalists')">Görsel Oluştur</button>
+            <div id="loading-economically-concerned-nationalists" class="loading-spinner"></div>
+            <img id="image-economically-concerned-nationalists" class="persona-image" style="display:none;" alt="Ekonomik Kaygılı Milliyetçiler Personası">
+        </div>
+
+        <!-- Persona 4: Kararsız ve Sisteme Mesafeli Gençler -->
+        <div class="persona-section">
+            <h2>Kararsız ve Sisteme Mesafeli Gençler</h2>
+            <button onclick="generateImage('undecided-youth')">Görsel Oluştur</button>
+            <div id="loading-undecided-youth" class="loading-spinner"></div>
+            <img id="image-undecided-youth" class="persona-image" style="display:none;" alt="Kararsız ve Sisteme Mesafeli Gençler Personası">
+        </div>
+    </div>
+
+    <script>
+        async function generateImage(personaId) {
+            const loadingSpinner = document.getElementById(`loading-${personaId}`);
+            const imageElement = document.getElementById(`image-${personaId}`);
+            const button = document.querySelector(`.persona-section button[onclick*="${personaId}"]`);
+
+            // Show loading spinner and hide image
+            loadingSpinner.style.display = 'block';
+            imageElement.style.display = 'none';
+            button.disabled = true; // Disable button during generation
+
+            let prompt = '';
+            switch (personaId) {
+                case 'traditional-conservative':
+                    prompt = 'A portrait of a 55-year-old Turkish woman, wearing a headscarf, looking thoughtful and serene. She is in a traditional Anatolian home setting, with subtle cultural motifs in the background. The image should convey a sense of strong family values and religious faith. Realistic style, portrait photo.';
+                    break;
+                case 'urban-secular-moderns':
+                    prompt = 'A stylish portrait of a 30-year-old Turkish professional, gender-neutral, in a modern urban environment like a bustling city street or a contemporary cafe. They are holding a book or a tablet, looking confident and intellectually curious. The image should convey a sense of modern, open-minded, and progressive values. Realistic style, vibrant colors.';
+                    break;
+                case 'economically-concerned-nationalists':
+                    prompt = 'A portrait of a 40-year-old Turkish man, with a serious but determined expression, symbolizing national pride and concern for the economy. He is dressed in casual, practical clothing, perhaps with a subtle Turkish flag emblem. The background suggests a mix of urban and industrial elements, reflecting economic struggles. Realistic style, strong and grounded.';
+                    break;
+                case 'undecided-youth':
+                    prompt = 'A contemporary portrait of a 20-year-old Turkish student, gender-neutral, with a slightly contemplative or uncertain expression, looking towards the future. They are in a dynamic, possibly abstract urban setting with elements of technology and social media in the background, representing youth, questioning, and a search for direction. The image should capture a blend of hope and skepticism. Modern, somewhat artistic style.';
+                    break;
+                default:
+                    console.error('Unknown persona ID');
+                    loadingSpinner.style.display = 'none';
+                    button.disabled = false;
+                    return;
+            }
+
+            try {
+                const payload = { instances: { prompt: prompt }, parameters: { "sampleCount": 1} };
+                const apiKey = ""; // Canvas will automatically provide the API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                    imageElement.src = imageUrl;
+                    imageElement.style.display = 'block';
+                } else {
+                    console.error('Image generation failed:', result);
+                    // Display a fallback message or image if generation fails
+                    imageElement.alt = 'Görsel oluşturulamadı.';
+                    imageElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error generating image:', error);
+                imageElement.alt = 'Görsel oluşturulurken bir hata oluştu.';
+                imageElement.style.display = 'block';
+            } finally {
+                // Hide loading spinner and enable button
+                loadingSpinner.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

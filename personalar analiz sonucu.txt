@@ -1,0 +1,108 @@
+﻿Belirlenen Personalar
+Kümeleme analizi sonucunda, Türk toplumunda dört belirgin ve anlamlı seçmen persona ortaya çıkmıştır. Her bir persona, demografik yapısı, sosyo-politik duruşu, temel tutum ve algıları ile davranışsal eğilimleri açısından kendine özgü bir profile sahiptir.
+Persona : Geleneksel Muhafazakar Çekirdek
+* Demografik Profil: Bu persona genellikle 45-60 yaş ve üzeri, evli kadınlardan oluşmaktadır. Hane halkı büyüklükleri ortalama 3-5 kişi civarındadır. Aylık gelirleri orta-düşük seviyede olup (2.000-25.000 TL aralığı), son bir yılda gelirlerinde belirgin bir değişim gözlemlemişlerdir. Eğitim düzeyleri genellikle lise veya ortaokul mezunudur. Daha çok Anadolu şehirlerinde veya merkezden uzak ilçelerde ikamet etmektedirler.
+* Sosyo-Politik Duruş: Bu grubun büyük çoğunluğu Sünni-Hanefi geleneğine bağlı, dindar veya çok dindar olarak kendini tanımlayan bireylerden oluşur. religiosity_index değerleri oldukça yüksektir. Etnik kimlik olarak kendilerini genellikle "Müslüman" veya "Türk" olarak tanımlarlar. Siyasi olarak sağ veya muhafazakar bir yönelime sahiptirler. Geçmiş seçimlerde (209 yerel, 2023 genel ve cumhurbaşkanlığı) ağırlıklı olarak AK Parti ve MHP'ye oy vermişlerdir. party_partisan_index değerleri yüksektir, bu da güçlü bir parti bağlılığını gösterir. AK Parti ve MHP'ye yönelik liking_scoreları oldukça yüksektir.
+* Temel Tutum ve Algılar: most_important_issue olarak genellikle "Ekonomi" veya "Diğer" (genellikle ahlaki değerler veya toplumsal düzen) konularını belirtirler. Mülteciler konusunda tolerance_syrian_vote gibi konularda düşük tolerans seviyeleri sergilerler ve "Kendi kimliğimizi korumalıyız, kültürlerin karışmaması genel olarak daha iyidir" görüşüne kesinlikle katılırlar. moral_intolerance_ban_homosexuality konusunda yüksek hoşgörüsüzlük gösterirler. Kurumlara güvenleri genel olarak yüksektir; özellikle orduya ve hükümete trust_in_military ve trust_in_government yüksek skorlar verirler. Popülist eğilimleri (populism_index) orta düzeydedir. Son 5 yılda ekonominin kötüleştiğine (economy_declined_5yrs) katılma eğilimindedirler ancak özgürlüklerin iyileştiğine (freedom_improved_5yrs) katılmama eğilimindedirler. Yolsuzluğun arttığına (corruption_increased_5yrs) kısmen katılırlar. Sokak köpeği sorunu için genellikle "Saldırgan sokak köpeklerine yönelik çözüm sağlanarak (bölgeden uzaklaştırma, uyutma vb.), geri kalan köpeklerin ise belirli bir plan çerçevesinde kısırlaştırılması" seçeneğini tercih ederler.
+* Davranışsal Eğilimler: Politikaya ilgileri orta düzeydedir. Oy verme nedenleri genellikle "En iyi hizmeti getireceğine inandığım aday olduğu için oy verdim" veya "Siyasi görüşümü yansıtan partinin adayı olduğu için oy verdim" şeklindedir. Yurt dışına taşınmayı düşünme oranları düşüktür. Gıdaya erişimde zorluk yaşama oranları düşüktür.
+* Anlatı Özeti: Bu persona, geleneksel değerlere sıkı sıkıya bağlı, dini inançları güçlü, genellikle orta yaş ve üzeri, Anadolu'da yaşayan ve mevcut iktidar partilerine sadık bir seçmen kitlesini temsil etmektedir. Ekonomik zorlukları hissetseler de, kimlik ve değerler üzerinden siyasi tercihlerini şekillendirirler.
+Persona 2: Kentli Laik Modernler
+* Demografik Profil: Genellikle 25-44 yaş aralığında, üniversite mezunu veya lisansüstü eğitimli, evli veya bekar kadın ve erkeklerden oluşur. Hane halkı büyüklükleri ortalama 2-4 kişidir. Aylık gelirleri orta-yüksek seviyededir (25.000-65.000 TL aralığı). Büyükşehirlerin merkezlerinde veya yakınında ikamet etmektedirler (örn. İstanbul, İzmir, Ankara).
+* Sosyo-Politik Duruş: Bu persona içinde ateist, deist veya doğaüstü bir yaratıcıya inanan ancak bir dine mensup olmayan bireyler bulunabilir. Dindarlık endeksleri (religiosity_index) düşüktür veya orta düzeydedir. Etnik kimlik olarak "Kemalist," "Türk" veya "Laik" gibi tanımlamalar yaygındır. Siyasi yönelimleri sol veya merkez-sol olarak belirgindir. Geçmiş seçimlerde CHP, İYİ Parti veya TİP gibi partilere oy vermişlerdir. Parti taraftarlığı endeksleri (party_partisan_index) orta düzeyde olup, CHP ve İYİ Parti'ye yönelik liking_scoreları yüksektir.
+* Temel Tutum ve Algılar: most_important_issue olarak sıklıkla "Ekonomi," "Adalet" veya "Eğitim"i belirtirler. Suriyelilerin oy kullanma hakkı gibi konularda tolerance_syrian_vote ve tolerance_lgbt_protests gibi konularda yüksek tolerans seviyeleri gösterirler. "Kendi kimliğimizi korumalıyız, kültürlerin karışmaması genel olarak daha iyidir" ifadesine katılmama eğilimindedirler. Homoseksüelliğin yasaklanması gibi ahlaki hoşgörüsüzlük konularında (moral_intolerance_ban_homosexuality) düşük skorlar alırlar. Haberlerin kısıtlanmasına (force_news_restricted) karşı çıkarlar ve idam cezasına (force_support_death_penalty) destekleri düşüktür. Kurumlara güvenleri, özellikle hükümet ve parlamentoya karşı düşüktür, ancak orduya ve yargıya karşı orta düzeyde güven duyabilirler. Popülizm endeksleri düşüktür. Son 5 yılda ekonominin kötüleştiğine (economy_declined_5yrs), özgürlüklerin azaldığına (freedom_improved_5yrs) ve yolsuzluğun arttığına (corruption_increased_5yrs) kesinlikle katılırlar. Yaşam kalitelerinin azaldığını (quality_of_life_declined_5yrs) ve bir arada yaşamanın zorlaştığını (living_together_difficult_5yrs) düşünürler. Yurt dışına taşınmayı düşünenlerin oranı bu grupta yüksektir. Sokak köpeği sorunu için genellikle "Sokak köpeklerinin kısırlaştırılarak, şehir dışında oluşturulan doğal yaşam alanlarına taşınması" seçeneğini tercih ederler.
+* Davranışsal Eğilimler: Politikaya ilgileri "çok yakından ilgiliyim" veya "biraz ilgiliyim" seviyesindedir. Oy verme nedenleri genellikle "Siyasi görüşümü yansıtan partinin adayı olduğu için oy verdim" veya "Ülkede bir şeylerin değişmesi için tepki olarak oy verdim" şeklindedir.
+* Anlatı Özeti: Bu persona, modern, kentli yaşam tarzını benimsemiş, eğitimli, laik değerlere önem veren ve mevcut hükümet politikalarına eleştirel yaklaşan bir kesimi temsil etmektedir. Ekonomik ve özgürlükler konusundaki endişeleri, siyasi tercihlerini derinden etkilemektedir.
+Persona 3: Ekonomik Kaygılı Milliyetçiler
+* Demografik Profil: Bu persona, 25-55 yaş aralığında, genellikle erkeklerden oluşur. Eğitim düzeyleri lise veya üniversite mezunudur. Hanehalkı büyüklükleri ortalama 3-5 kişidir. Aylık gelirleri orta seviyededir (7.500-45.000 TL aralığı) ve son bir yılda gelirlerinde azalma veya değişiklik gözlemlemişlerdir. Hem şehir merkezlerinde hem de merkezden uzak ilçelerde bulunabilirler.
+* Sosyo-Politik Duruş: Dini inançları İslam'a bağlı olmakla birlikte, dindarlık endeksleri orta düzeydedir ("Ne dindarım ne değilim" veya "İnançlı ama dinin gereklerini pek yerine getiremeyen biri"). Etnik kimlik olarak "Milliyetçi" veya "Ülkücü" tanımlamaları baskındır. Siyasi yönelimleri sağ veya aşırı sağ olarak belirgindir. Geçmiş seçimlerde MHP, İYİ Parti veya Zafer Partisi'ne oy vermişlerdir. Parti taraftarlığı endeksleri yüksek olup, MHP ve Zafer Partisi'ne yönelik liking_scoreları yüksektir.
+* Temel Tutum ve Algılar: most_important_issue olarak sıklıkla "Ekonomi" veya "Mülteciler"i belirtirler. Mülteciler konusunda tolerance_syrian_vote ve tolerance_right_to_exclude_syrians gibi konularda düşük tolerans gösterirler ve "Kendi kimliğimizi korumalıyız, kültürlerin karışmaması genel olarak daha iyidir" ifadesine kesinlikle katılırlar. Diğer sosyal hoşgörü konularında (örn. LGBT protestoları, ateist öğretmenler) nötr veya rahatsız olma eğilimindedirler. İdam cezasına destekleri yüksektir. Kurumlara güvenleri, özellikle orduya ve güvenlik güçlerine karşı yüksektir. Popülizm endeksleri orta-yüksek düzeydedir. Son 5 yılda ekonominin kötüleştiğine (economy_declined_5yrs) kesinlikle katılırlar ve yaşam kalitelerinin azaldığını düşünürler. Yolsuzluğun arttığına katılma eğilimindedirler. Sokak köpeği sorunu için genellikle "Sokak köpeklerinin barınaklara alınarak sokaklardan toplanması" seçeneğini tercih ederler.
+* Davranışsal Eğilimler: Politikaya ilgileri "biraz ilgiliyim" veya "pek ilgi duymam" seviyesindedir. Oy verme nedenleri arasında "En iyi hizmeti getireceğine inandığım aday olduğu için oy verdim" veya "Siyasi görüşümü yansıtan partinin adayı olduğu için oy verdim" yer alır. Yurt dışına taşınmayı düşünme oranları orta düzeydedir.
+* Anlatı Özeti: Bu persona, ekonomik kaygıları yüksek, milliyetçi değerlere bağlı, mülteci sorununa hassasiyet gösteren ve mevcut siyasi düzende belirli bir değişim arayışında olan bir kesimi temsil etmektedir. Geleneksel sağ partilere bağlılıkları olsa da, ekonomik sıkıntılar ve ulusal kimlik meseleleri öncelikleridir.
+Persona 4: Kararsız ve Sisteme Mesafeli Gençler
+* Demografik Profil: Bu persona, 8-34 yaş aralığında, genellikle bekar veya yeni evli gençlerden oluşur. Eğitim düzeyleri lise veya üniversite öğrencisi/mezunudur. Hane halkı büyüklükleri ortalama 3-4 kişidir. Aylık gelirleri düşük-orta seviyededir (8.500-26.750 TL aralığı) ve gelirlerinde azalma veya değişiklik gözlemlemişlerdir. Büyük şehirlerde veya merkezden uzak ilçelerde ikamet edebilirler.
+* Sosyo-Politik Duruş: Dini inançları çeşitlilik gösterebilir; Allah'a inanan ancak bir dine bağlı olmayan, deist veya ateist eğilimler görülebilir. Dindarlık endeksleri düşüktür. Etnik kimlik tanımlamaları arasında "Türk," "Kemalist," "Müslüman" veya "Yanıt vermek istemiyorum" bulunabilir. Siyasi yönelimleri belirsizdir veya geleneksel sol-sağ ayrımına mesafeli olabilirler. Geçmiş seçimlerde oy kullanmamış veya farklı partilere (örn. Memleket Partisi, Zafer Partisi, TİP, HÜDA PAR gibi daha küçük veya protesto partileri) stratejik olarak oy vermişlerdir. party_partisan_index değerleri düşüktür, bu da zayıf bir parti bağlılığını gösterir. Major partilere yönelik liking_scoreları genellikle düşüktür veya nötrdür.
+* Temel Tutum ve Algılar: most_important_issue olarak genellikle "Ekonomi," "Eğitim," "Adalet" veya "Diğer" (genellikle gelecek kaygısı veya sistem eleştirisi) konularını belirtirler. Sosyal hoşgörü konularında (örn. Suriyeliler, LGBT) farklılıklar gösterebilirler; bazıları yüksek tolerans gösterirken, bazıları "Kendi kimliğimizi korumalıyız, kültürlerin karışmaması genel olarak daha iyidir" görüşüne katılabilirler. Ahlaki hoşgörüsüzlük konularında (moral_intolerance_ban_homosexuality) nötr veya düşük skorlar alırlar. Kurumlara güvenleri genel olarak düşüktür (trust_in_institutions_normalized düşüktür). Popülizm endeksleri değişkendir, ancak bazıları popülist söylemlere yatkın olabilir. Son 5 yılda ekonominin kötüleştiğine (economy_declined_5yrs), özgürlüklerin azaldığına (freedom_improved_5yrs), yolsuzluğun arttığına (corruption_increased_5yrs) kesinlikle katılırlar. Yaşam kalitelerinin azaldığını (quality_of_life_declined_5yrs), gıdaya erişimde zorluk yaşadıklarını (struggled_with_food_access_5yrs) ve bir arada yaşamanın zorlaştığını (living_together_difficult_5yrs) düşünürler. Yurt dışına taşınmayı düşünme oranları bu grupta en yüksektir. Sokak köpeği sorunu için genellikle "Sokak köpeklerinin barınaklara alınarak sokaklardan toplanması" veya "Sokak köpeklerinin kısırlaştırılarak, şehir dışında oluşturulan doğal yaşam alanlarına taşınması" seçeneklerini tercih ederler.
+* Davranışsal Eğilimler: Politikaya ilgileri "pek ilgi duymam" veya "hiç ilgi duymam" seviyesindedir. Oy vermeme nedenleri arasında "Zamanım yoktu," "Beni temsil edecek bir aday yoktu" veya "Sisteme inanmıyorum" gibi ifadeler yer alır. reason_not_voting sütununda bu eğilim açıkça görülmektedir.
+* Anlatı Özeti: Bu persona, ekonomik sıkıntılar, gelecek kaygısı ve kurumsal güvensizlik nedeniyle siyasi sisteme karşı mesafeli duran, geleneksel parti bağlılıkları zayıf veya olmayan genç bir kesimi temsil etmektedir. Protesto oyu verme veya hiç oy kullanmama eğilimindedirler.
+Personaların Karşılaştırmalı Özeti
+Aşağıdaki tablo, belirlenen dört personanın en ayırt edici özelliklerini özetleyerek kolay bir karşılaştırma imkanı sunmaktadır:
+Özellik
+	Geleneksel Muhafazakar Çekirdek
+	Kentli Laik Modernler
+	Ekonomik Kaygılı Milliyetçiler
+	Kararsız ve Sisteme Mesafeli Gençler
+	Tipik Yaş Aralığı
+	45-60+
+	25-44
+	25-55
+	8-34
+	Eğitim Düzeyi
+	Lise/Ortaokul
+	Üniversite/Lisansüstü
+	Lise/Üniversite
+	Lise/Üniversite Öğrencisi/Mezunu
+	Tipik Gelir
+	Orta-Düşük
+	Orta-Yüksek
+	Orta
+	Düşük-Orta
+	Yerleşim Yeri
+	Anadolu Şehirleri/Merkezden Uzak İlçeler
+	Büyükşehir Merkezleri
+	Hem Şehir Hem İlçe
+	Büyükşehirler/İlçeler
+	Dindarlık Endeksi
+	Yüksek
+	Düşük/Orta
+	Orta
+	Düşük
+	Etnik Kimlik
+	Müslüman/Türk
+	Kemalist/Türk/Laik
+	Milliyetçi/Ülkücü
+	Çeşitli/Belirsiz
+	Siyasi Yönelim
+	Sağ/Muhafazakar
+	Sol/Merkez-Sol
+	Sağ/Aşırı Sağ
+	Belirsiz/Sisteme Mesafeli
+	Desteklenen Partiler
+	AK Parti, MHP
+	CHP, İYİ Parti, TİP
+	MHP, Zafer Partisi
+	Çeşitli/Oy Kullanmama
+	En Önemli Sorun
+	Ekonomi, Ahlaki Değerler
+	Ekonomi, Adalet, Eğitim
+	Ekonomi, Mülteciler
+	Ekonomi, Eğitim, Adalet, Gelecek
+	Suriyeli Toleransı
+	Düşük
+	Yüksek
+	Düşük
+	Değişken
+	LGBT Toleransı
+	Düşük
+	Yüksek
+	Orta/Düşük
+	Değişken
+	Kurumsal Güven
+	Yüksek (Ordu, Hükümet)
+	Düşük (Hükümet, Parlamento)
+	Yüksek (Ordu, Güvenlik)
+	Düşük (Genel)
+	Popülizm Eğilimi
+	Orta
+	Düşük
+	Orta-Yüksek
+	Değişken
+	Yurt Dışına Gitme Eğilimi
+	Düşük
+	Yüksek
+	Orta
+	En Yüksek
+	Yaşam Kalitesi Algısı (Son 5 Yıl)
+	Azaldı
+	Kesinlikle Azaldı
+	Azaldı
+	Kesinlikle Azaldı
