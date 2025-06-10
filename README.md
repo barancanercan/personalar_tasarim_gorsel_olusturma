@@ -14,7 +14,7 @@ Bu uygulama, Türk seçmenlerinin farklı demografik ve psikografik özellikleri
 
 1. Projeyi klonlayın:
 ```bash
-git clone https://github.com/yourusername/turk-secmen-personalari.git
+git clone https://github.com/barancanercan/turk-secmen-personalari.git
 cd turk-secmen-personalari
 ```
 
@@ -92,6 +92,6 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 ## İletişim
 
-Proje Sahibi - [@yourusername](https://github.com/yourusername)
+Baran Can Ercan - [@barancanercan](https://github.com/barancanercan)
 
-Proje Linki: [https://github.com/yourusername/turk-secmen-personalari](https://github.com/yourusername/turk-secmen-personalari) 
+Proje Linki: [https://github.com/barancanercan/turk-secmen-personalari](https://github.com/barancanercan/turk-secmen-personalari) 
