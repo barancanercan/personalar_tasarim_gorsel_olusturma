@@ -24,17 +24,19 @@ wheels/
 venv/
 ENV/
 env/
-.env
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-.DS_Store
 
 # Streamlit
 .streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Logs
 *.log

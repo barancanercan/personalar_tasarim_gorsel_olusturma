@@ -8,6 +8,18 @@ import google.generativeai as genai
 from PIL import Image
 import io
 import base64
+import asyncio
+from src.models.gemini_handler import GeminiHandler
+from src.utils.config import (
+    PERSONA_IMAGE_PROMPTS,
+    ERROR_MESSAGES,
+    STYLE_MAPPINGS
+)
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Page config
 st.set_page_config(
@@ -189,8 +201,13 @@ st.markdown("""
 st.title("Türk Toplumu Seçmen Personaları")
 st.markdown("Kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili")
 
-# Configure Gemini API
-genai.configure(api_key="AIzaSyDEXARIukI2aDb3-JcwWygi6yvIz6Mk3hU")
+# Initialize Gemini handler
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    st.error(ERROR_MESSAGES["api_key_missing"])
+    st.stop()
+
+handler = GeminiHandler(api_key)
 
 # Persona image generation prompts
 persona_image_prompts = {
@@ -210,13 +227,21 @@ personas = {
             "Yaş Aralığı": "45-60+",
             "Eğitim": "Lise/Ortaokul",
             "Gelir": "Orta-Düşük",
-            "Konum": "Anadolu Şehirleri"
+            "Konum": "Anadolu Şehirleri",
+            "Medya Tüketimi": "TV ve Yerel Medya",
+            "Sosyal Medya Kullanımı": "Düşük",
+            "Alışveriş Tercihi": "Yerel Marketler",
+            "Boş Zaman Aktiviteleri": "Aile Zamanı, Dini Etkinlikler"
         },
         "metrics": {
             "Dindarlık Endeksi": 85,
             "Parti Bağlılığı": 90,
             "Kurumsal Güven": 75,
-            "Ekonomik Endişe": 65
+            "Ekonomik Endişe": 65,
+            "Geleneksel Değerlere Bağlılık": 95,
+            "Aile Değerleri": 90,
+            "Toplumsal Değişime Açıklık": 40,
+            "Teknoloji Adaptasyonu": 35
         },
         "description": "Geleneksel değerlere sıkı sıkıya bağlı, dini inançları güçlü, genellikle orta yaş ve üzeri kadınlardan oluşan bu grup, Anadolu'da yaşayan ve mevcut iktidar partilerine sadık bir seçmen kitlesini temsil eder.",
         "tags": ["AK Parti", "MHP", "Dindar", "Muhafazakar"],
@@ -224,8 +249,23 @@ personas = {
             "Ekonomi": -20,
             "Özgürlükler": 10,
             "Yolsuzluk": -15,
-            "Yaşam Kalitesi": -25
-        }
+            "Yaşam Kalitesi": -25,
+            "Güvenlik": 5,
+            "Eğitim": -10,
+            "Sağlık": -15,
+            "İstihdam": -20
+        },
+        "voting_history": {
+            "2018": "AK Parti",
+            "2019": "AK Parti",
+            "2023": "AK Parti"
+        },
+        "key_issues": [
+            "Dini değerlerin korunması",
+            "Aile yapısının güçlendirilmesi",
+            "Ekonomik istikrar",
+            "Güvenlik ve düzen"
+        ]
     },
     "Kentli Laik Modernler": {
         "icon": "🏙️",
@@ -235,13 +275,21 @@ personas = {
             "Yaş Aralığı": "25-44",
             "Eğitim": "Üniversite+",
             "Gelir": "Orta-Yüksek",
-            "Konum": "Büyükşehirler"
+            "Konum": "Büyükşehirler",
+            "Medya Tüketimi": "Dijital Medya",
+            "Sosyal Medya Kullanımı": "Yüksek",
+            "Alışveriş Tercihi": "Online Alışveriş",
+            "Boş Zaman Aktiviteleri": "Kültür-Sanat, Spor"
         },
         "metrics": {
             "Dindarlık Endeksi": 30,
             "Parti Bağlılığı": 60,
             "Kurumsal Güven": 40,
-            "Ekonomik Endişe": 85
+            "Ekonomik Endişe": 85,
+            "Modern Değerlere Bağlılık": 90,
+            "Bireysel Özgürlükler": 95,
+            "Toplumsal Değişime Açıklık": 85,
+            "Teknoloji Adaptasyonu": 90
         },
         "description": "Modern, kentli yaşam tarzını benimsemiş, eğitimli, laik değerlere önem veren ve mevcut hükümet politikalarına eleştirel yaklaşan kesim. Ekonomik ve özgürlükler konusundaki endişeleri siyasi tercihlerini etkiler.",
         "tags": ["CHP", "İYİ Parti", "Laik", "Modernist"],
@@ -249,24 +297,47 @@ personas = {
             "Ekonomi": -35,
             "Özgürlükler": -40,
             "Yolsuzluk": -45,
-            "Yaşam Kalitesi": -30
-        }
+            "Yaşam Kalitesi": -30,
+            "Güvenlik": -25,
+            "Eğitim": -35,
+            "Sağlık": -30,
+            "İstihdam": -40
+        },
+        "voting_history": {
+            "2018": "CHP",
+            "2019": "CHP",
+            "2023": "CHP/İYİ Parti"
+        },
+        "key_issues": [
+            "Demokratik haklar",
+            "Ekonomik refah",
+            "Eğitim kalitesi",
+            "Çevre ve sürdürülebilirlik"
+        ]
     },
     "Ekonomik Kaygılı Milliyetçiler": {
         "icon": "🇹🇷",
         "color": "#f39c12",
         "subtitle": "Ulusal değerlere bağlı, ekonomi odaklı",
         "stats": {
-            "Yaş Aralığı": "25-55",
+            "Yaş Aralığı": "25-50",
             "Eğitim": "Lise/Üniversite",
             "Gelir": "Orta",
-            "Konum": "Karma"
+            "Konum": "Karma",
+            "Medya Tüketimi": "TV ve Sosyal Medya",
+            "Sosyal Medya Kullanımı": "Orta",
+            "Alışveriş Tercihi": "Yerel ve Online Karma",
+            "Boş Zaman Aktiviteleri": "Spor, Sosyal Etkinlikler"
         },
         "metrics": {
             "Dindarlık Endeksi": 50,
             "Parti Bağlılığı": 70,
             "Kurumsal Güven": 60,
-            "Ekonomik Endişe": 90
+            "Ekonomik Endişe": 90,
+            "Milliyetçilik": 85,
+            "Ekonomik Güvenlik": 75,
+            "Toplumsal Değişime Açıklık": 45,
+            "Teknoloji Adaptasyonu": 60
         },
         "description": "Ekonomik kaygıları yüksek, milliyetçi değerlere bağlı, mülteci sorununa hassasiyet gösteren kesim. Geleneksel sağ partilere bağlılıkları olsa da ekonomik sıkıntılar ve ulusal kimlik meseleleri öncelik.",
         "tags": ["MHP", "Zafer Partisi", "Milliyetçi", "Ekonomi"],
@@ -274,10 +345,25 @@ personas = {
             "Ekonomi": -40,
             "Özgürlükler": -20,
             "Yolsuzluk": -35,
-            "Yaşam Kalitesi": -35
-        }
+            "Yaşam Kalitesi": -35,
+            "Güvenlik": -30,
+            "Eğitim": -25,
+            "Sağlık": -30,
+            "İstihdam": -45
+        },
+        "voting_history": {
+            "2018": "MHP",
+            "2019": "MHP",
+            "2023": "MHP/Zafer Partisi"
+        },
+        "key_issues": [
+            "Ekonomik istikrar",
+            "Ulusal güvenlik",
+            "İstihdam",
+            "Göç politikaları"
+        ]
     },
-    "Kararsız Sisteme Mesafeli Gençler": {
+    "Kararsız ve Sisteme Mesafeli Gençler": {
         "icon": "🤔",
         "color": "#9b59b6",
         "subtitle": "Gelecek kaygılı, sistem eleştirisi",
@@ -285,13 +371,21 @@ personas = {
             "Yaş Aralığı": "18-34",
             "Eğitim": "Lise/Üniversite",
             "Gelir": "Düşük-Orta",
-            "Konum": "Çeşitli"
+            "Konum": "Çeşitli",
+            "Medya Tüketimi": "Sosyal Medya",
+            "Sosyal Medya Kullanımı": "Çok Yüksek",
+            "Alışveriş Tercihi": "Online Alışveriş",
+            "Boş Zaman Aktiviteleri": "Dijital İçerik, Sosyal Etkinlikler"
         },
         "metrics": {
             "Dindarlık Endeksi": 25,
             "Parti Bağlılığı": 20,
             "Kurumsal Güven": 15,
-            "Ekonomik Endişe": 95
+            "Ekonomik Endişe": 95,
+            "Sistem Eleştirisi": 90,
+            "Değişim Talebi": 85,
+            "Toplumsal Değişime Açıklık": 95,
+            "Teknoloji Adaptasyonu": 95
         },
         "description": "Ekonomik sıkıntılar, gelecek kaygısı ve kurumsal güvensizlik nedeniyle siyasi sisteme mesafeli duran genç kesim. Geleneksel parti bağlılıkları zayıf, protesto oyu verme veya oy kullanmama eğilimi yüksek.",
         "tags": ["Protesto", "Küçük Partiler", "Sisteme Mesafeli", "Genç"],
@@ -299,8 +393,23 @@ personas = {
             "Ekonomi": -45,
             "Özgürlükler": -45,
             "Yolsuzluk": -50,
-            "Yaşam Kalitesi": -45
-        }
+            "Yaşam Kalitesi": -45,
+            "Güvenlik": -35,
+            "Eğitim": -40,
+            "Sağlık": -35,
+            "İstihdam": -50
+        },
+        "voting_history": {
+            "2018": "Oy Kullanmadı",
+            "2019": "Küçük Partiler",
+            "2023": "Kararsız"
+        },
+        "key_issues": [
+            "İş imkanları",
+            "Eğitim sistemi",
+            "Gelecek kaygısı",
+            "Sistem değişikliği"
+        ]
     }
 }
 
@@ -319,7 +428,7 @@ analysis_type = st.sidebar.radio(
     ["Genel Bakış", "Detaylı Analiz", "Karşılaştırma"]
 )
 
-# --- Sidebar: Add new module option ---
+# Sidebar: Add new module option
 menu = ["Analizler", "Persona Görsel Oluşturucu"]
 selected_menu = st.sidebar.radio("Modül Seçin", menu)
 
@@ -358,48 +467,58 @@ if selected_menu == "Analizler":
                          color_discrete_sequence=[persona['color']],
                          template='plotly_dark')
             fig.update_layout(
-                title="Temel Metrikler",
+                title="Metrikler",
                 showlegend=False,
                 plot_bgcolor='#18191a',
                 paper_bgcolor='#18191a',
-                font_color='#f1f1f1'
+                font=dict(color='#f1f1f1')
             )
             st.plotly_chart(fig, use_container_width=True)
 
         # Trend analysis
         st.markdown("### Trend Analizi")
+        trends = persona['trends']
         trends_df = pd.DataFrame({
-            'Kategori': list(persona['trends'].keys()),
-            'Değişim': list(persona['trends'].values())
+            'Kategori': list(trends.keys()),
+            'Değişim': list(trends.values())
         })
         
         fig = px.line(trends_df, x='Kategori', y='Değişim',
                       markers=True, color_discrete_sequence=[persona['color']],
                       template='plotly_dark')
         fig.update_layout(
-            title="Son 5 Yıldaki Değişimler",
+            title="Trend Analizi",
             showlegend=False,
             plot_bgcolor='#18191a',
             paper_bgcolor='#18191a',
-            font_color='#f1f1f1'
+            font=dict(color='#f1f1f1')
         )
         st.plotly_chart(fig, use_container_width=True)
 
     elif analysis_type == "Detaylı Analiz":
         persona = personas[selected_persona]
         
-        # Metrics cards
-        cols = st.columns(4)
-        for i, (metric, value) in enumerate(persona['metrics'].items()):
-            with cols[i]:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-value">{value}</div>
-                    <div class="metric-label">{metric}</div>
-                </div>
-                """, unsafe_allow_html=True)
+        # Metrics cards with enhanced styling
+        metrics = list(persona['metrics'].items())
+        num_metrics = len(metrics)
+        num_cols = 4
+        num_rows = (num_metrics + num_cols - 1) // num_cols  # Ceiling division
         
-        # Detailed stats
+        for row in range(num_rows):
+            cols = st.columns(num_cols)
+            for col in range(num_cols):
+                idx = row * num_cols + col
+                if idx < num_metrics:
+                    metric, value = metrics[idx]
+                    with cols[col]:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <div class="metric-value">{value}</div>
+                            <div class="metric-label">{metric}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+        
+        # Detailed stats with enhanced visualization
         st.markdown("### Demografik Özellikler")
         stats_df = pd.DataFrame({
             'Özellik': list(persona['stats'].keys()),
@@ -407,13 +526,27 @@ if selected_menu == "Analizler":
         })
         st.dataframe(stats_df, use_container_width=True)
         
-        # Radar chart for metrics
+        # Voting history
+        st.markdown("### Seçim Geçmişi")
+        voting_df = pd.DataFrame({
+            'Yıl': list(persona['voting_history'].keys()),
+            'Tercih': list(persona['voting_history'].values())
+        })
+        st.dataframe(voting_df, use_container_width=True)
+        
+        # Key issues
+        st.markdown("### Öncelikli Konular")
+        for issue in persona['key_issues']:
+            st.markdown(f"- {issue}")
+        
+        # Enhanced radar chart for metrics
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
             r=list(persona['metrics'].values()),
             theta=list(persona['metrics'].keys()),
             fill='toself',
-            name=selected_persona
+            name=selected_persona,
+            line=dict(color=persona['color'])
         ))
         fig.update_layout(
             polar=dict(
@@ -429,7 +562,28 @@ if selected_menu == "Analizler":
             showlegend=False,
             title="Metrikler Radar Grafiği",
             paper_bgcolor='#18191a',
-            font_color='#f1f1f1'
+            font=dict(color='#f1f1f1')
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Trend analysis with enhanced visualization
+        st.markdown("### Trend Analizi")
+        trends = persona['trends']
+        trends_df = pd.DataFrame({
+            'Kategori': list(trends.keys()),
+            'Değişim': list(trends.values())
+        })
+        
+        fig = px.bar(trends_df, x='Kategori', y='Değişim',
+                     color='Değişim',
+                     color_continuous_scale=['#e74c3c', '#f39c12', '#3498db'],
+                     template='plotly_dark')
+        fig.update_layout(
+            title="Trend Analizi",
+            showlegend=False,
+            plot_bgcolor='#18191a',
+            paper_bgcolor='#18191a',
+            font=dict(color='#f1f1f1')
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -483,7 +637,7 @@ if selected_menu == "Analizler":
                 showlegend=True,
                 title="Metrikler Karşılaştırma Grafiği",
                 paper_bgcolor='#18191a',
-                font_color='#f1f1f1'
+                font=dict(color='#f1f1f1')
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -496,46 +650,35 @@ elif selected_menu == "Persona Görsel Oluşturucu":
     st.markdown('<div class="image-gen-title">Persona Görsel Oluşturucu</div>', unsafe_allow_html=True)
     st.markdown('<div class="image-gen-subtitle">Seçtiğiniz persona için yapay zeka destekli görsel oluşturun</div>', unsafe_allow_html=True)
     
-    persona_choice = st.selectbox("Persona Seçin", list(persona_image_prompts.keys()))
-    prompt = persona_image_prompts[persona_choice]
-    
+    persona_choice = st.selectbox("Persona Seçin", list(PERSONA_IMAGE_PROMPTS.keys()), key="persona_image_select")
+
     if 'image_url' not in st.session_state:
         st.session_state['image_url'] = None
     if 'loading_image' not in st.session_state:
         st.session_state['loading_image'] = False
         
-    if st.button("Görsel Oluştur", key="imagegenbtn", help="Seçilen persona için yapay zeka ile görsel oluştur.",
-                args=None, kwargs=None, type="primary"):
+    # Custom prompt input
+    st.subheader("Görsel Oluşturma Ayarları")
+    custom_prompt = st.text_area(
+        "Özel Prompt (İsteğe bağlı)",
+        value=PERSONA_IMAGE_PROMPTS[persona_choice],
+        help="Görsel oluşturmak için özel bir prompt girebilirsiniz. Boş bırakırsanız varsayılan prompt kullanılır."
+    )
+
+    if st.button("Görsel Oluştur", key="imagegen", help="Seçilen persona için yapay zeka ile görsel oluştur.",
+                type="primary"):
         st.session_state['loading_image'] = True
         st.session_state['image_url'] = None
         
-        try:
-            # Initialize Gemini model
-            model = genai.GenerativeModel('gemini-pro-vision')
-            
-            # Generate image using the text-to-image endpoint
-            response = model.generate_content(
-                contents=[{
-                    "role": "user",
-                    "parts": [{"text": prompt}]
-                }],
-                generation_config={
-                    "temperature": 0.9,
-                    "top_p": 1,
-                    "top_k": 32,
-                    "max_output_tokens": 2048,
-                }
-            )
-            
-            if response and hasattr(response, 'candidates') and response.candidates:
-                # Get the generated image URL from the response
-                image_url = response.candidates[0].content.parts[0].text
-                st.session_state['image_url'] = image_url
-            else:
-                st.error("Görsel oluşturulamadı. Lütfen tekrar deneyin.")
-                
-        except Exception as e:
-            st.error(f"Görsel oluşturulurken hata oluştu: {str(e)}")
+        # Use custom prompt if provided, otherwise use default
+        prompt = custom_prompt if custom_prompt else PERSONA_IMAGE_PROMPTS[persona_choice]
+        
+        result = handler.generate_image(prompt)
+        
+        if result["success"]:
+            st.session_state['image_url'] = result["image_url"]
+        else:
+            st.error(result["error"])
             
         st.session_state['loading_image'] = False
         
@@ -547,9 +690,9 @@ elif selected_menu == "Persona Görsel Oluşturucu":
         </div>
         """, unsafe_allow_html=True)
         
-    if st.session_state['image_url']:
+    if st.session_state.get('image_url'):
         st.image(st.session_state['image_url'], 
-                caption=f"{persona_choice} için oluşturulan görsel", 
-                use_column_width=True)
+                 caption=f"{persona_choice} için oluşturulan görsel", 
+                 use_column_width=True)
         
-    st.markdown('</div>', unsafe_allow_html=True) 
+    st.markdown('</div>', unsafe_allow_html=True)
