@@ -202,12 +202,7 @@ st.title("Türk Toplumu Seçmen Personaları")
 st.markdown("Kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili")
 
 # Initialize Gemini handler
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    st.error(ERROR_MESSAGES["api_key_missing"])
-    st.stop()
-
-handler = GeminiHandler(api_key)
+gemini_handler = GeminiHandler(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # Persona image generation prompts
 persona_image_prompts = {
@@ -673,7 +668,7 @@ elif selected_menu == "Persona Görsel Oluşturucu":
         # Use custom prompt if provided, otherwise use default
         prompt = custom_prompt if custom_prompt else PERSONA_IMAGE_PROMPTS[persona_choice]
         
-        result = handler.generate_image(prompt)
+        result = gemini_handler.generate_image(prompt)
         
         if result["success"]:
             st.session_state['image_url'] = result["image_url"]
