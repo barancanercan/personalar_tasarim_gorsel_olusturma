@@ -540,6 +540,67 @@ def main():
             
             # Create metrics visualization
             create_metrics_viz(selected_persona, personas[selected_persona])
+            
+            # Detaylı Analiz Bölümü
+            st.markdown("---")
+            st.subheader("📈 Detaylı Analiz")
+            
+            # Metriklerin Detaylı Açıklaması
+            st.markdown("#### Metriklerin Detaylı Açıklaması")
+            metrics_explanation = {
+                "Sosyal Medya Kullanımı": "Sosyal medya platformlarını kullanma sıklığı ve bağımlılık seviyesi",
+                "Politik İlgi": "Siyasi gelişmeleri takip etme ve ilgilenme düzeyi",
+                "Ekonomik Endişe": "Ekonomik durum ve gelecek kaygısı seviyesi",
+                "Kültürel Değerler": "Geleneksel ve kültürel değerlere bağlılık seviyesi"
+            }
+            
+            for metric, explanation in metrics_explanation.items():
+                value = personas[selected_persona]["metrics"][metric]
+                st.markdown(f"**{metric}** ({value:.1f})")
+                st.markdown(f"*{explanation}*")
+                st.markdown("---")
+            
+            # Davranış Analizi
+            st.markdown("#### 🎯 Davranış Analizi")
+            behavior_analysis = {
+                "Hatice Teyze": "Geleneksel değerlere bağlı, aile odaklı ve dini inançları güçlü bir profil. Ekonomik kaygıları yüksek ancak sosyal medya kullanımı düşük.",
+                "Kenan Bey": "Modern, laik ve profesyonel bir profil. Sosyal medya kullanımı yüksek, ekonomik kaygıları orta seviyede.",
+                "Tuğrul Bey": "Milliyetçi değerlere sahip, ekonomik kaygıları yüksek bir esnaf profili. Sosyal medya kullanımı orta seviyede.",
+                "Elif": "Sosyal medya bağımlısı, sisteme mesafeli ve gelecek kaygısı yüksek bir genç profil. Politik ilgisi düşük."
+            }
+            st.markdown(behavior_analysis[selected_persona])
+            
+            # Öneriler
+            st.markdown("#### 💡 Öneriler")
+            recommendations = {
+                "Hatice Teyze": [
+                    "Geleneksel değerleri ön plana çıkaran iletişim stratejisi",
+                    "Aile ve dini değerleri vurgulayan mesajlar",
+                    "Ekonomik güvence ve sosyal destek programları",
+                    "Yerel topluluk etkinlikleri ve buluşmaları"
+                ],
+                "Kenan Bey": [
+                    "Profesyonel ve modern bir iletişim dili",
+                    "Ekonomik kalkınma ve istihdam odaklı mesajlar",
+                    "Teknoloji ve inovasyon vurgusu",
+                    "Uluslararası standartlarda yaşam kalitesi"
+                ],
+                "Tuğrul Bey": [
+                    "Milli değerleri ön plana çıkaran mesajlar",
+                    "Yerel üretim ve esnaf destekleri",
+                    "Ekonomik istikrar ve güvenlik vurgusu",
+                    "Yerel kalkınma programları"
+                ],
+                "Elif": [
+                    "Sosyal medya odaklı iletişim stratejisi",
+                    "Gençlik programları ve kariyer fırsatları",
+                    "Modern ve yenilikçi yaklaşımlar",
+                    "Sosyal sorumluluk projeleri"
+                ]
+            }
+            
+            for rec in recommendations[selected_persona]:
+                st.markdown(f"- {rec}")
         
         else:  # Karşılaştırma
             selected_personas = st.multiselect(
