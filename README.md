@@ -1,82 +1,56 @@
-# Türk Seçmen Personaları Analiz Uygulaması
+# Türk Seçmen Personaları Analiz Platformu
 
-Bu uygulama, Türk seçmenlerinin farklı demografik ve psikografik özelliklerini analiz eden, görselleştiren ve yapay zeka destekli görsel oluşturma özellikleri sunan bir Streamlit uygulamasıdır.
+Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleştiren interaktif bir web uygulamasıdır. Kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili üzerine odaklanmaktadır.
 
 ## Özellikler
 
-- 4 farklı seçmen personanın detaylı analizi
-- Demografik ve psikografik metriklerin görselleştirilmesi
-- Seçim geçmişi ve trend analizleri
-- Yapay zeka destekli persona görseli oluşturma
-- Karşılaştırmalı analiz araçları
+- **Persona Kartları**: Her bir seçmen profili için detaylı bilgi kartları
+- **Analizler**: Seçmen profillerinin metriklerini görselleştiren analiz araçları
+- **PersonaGPT**: Seçilen persona ile sohbet etme imkanı
+- **Sesli Sohbet**: Metin ve sesli sohbet seçenekleri
+- **Detaylı Metrikler**: Sosyal medya kullanımı, politik ilgi, ekonomik endişe ve kültürel değerler üzerine analizler
 
 ## Kurulum
 
-1. Projeyi klonlayın:
-```bash
-git clone https://github.com/barancanercan/turk-secmen-personalari.git
-cd turk-secmen-personalari
-```
-
-2. Sanal ortam oluşturun ve aktifleştirin:
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac için
-# veya
-.\venv\Scripts\activate  # Windows için
-```
-
-3. Gerekli paketleri yükleyin:
+1. Gerekli paketleri yükleyin:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. API anahtarlarını ayarlayın:
-- `.streamlit/secrets.toml` dosyasını oluşturun
-- Gerekli API anahtarlarını ekleyin:
-```toml
-GOOGLE_API_KEY = "your-google-api-key"
-HUGGINGFACE_API_KEY = "your-huggingface-api-key"
+2. `.env` dosyası oluşturun ve gerekli API anahtarlarını ekleyin:
+```
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-## Kullanım
-
-Uygulamayı başlatmak için:
+3. Uygulamayı başlatın:
 ```bash
 streamlit run app.py
 ```
 
-Uygulama http://localhost:8501 adresinde çalışacaktır.
+## Kullanım
 
-## Persona Tipleri
+1. Sol menüden bir modül seçin:
+   - PersonaGPT: Persona ile sohbet
+   - Analizler: Seçmen profillerinin analizi
+   - Persona Kartları: Detaylı persona bilgileri
 
-1. **Geleneksel Muhafazakar Çekirdek**
-   - Değerlerine bağlı, sadık seçmen
-   - Dindar ve muhafazakar değerlere sahip
-   - Anadolu'da yaşayan orta yaş ve üzeri kadınlar
+2. Persona seçin ve analiz türünü belirleyin:
+   - Genel Bakış
+   - Detaylı Analiz
+   - Karşılaştırma
 
-2. **Kentli Laik Modernler**
-   - Eğitimli, eleştirel düşünür
-   - Modern ve laik değerlere sahip
-   - Büyükşehirlerde yaşayan genç-orta yaş grubu
+3. PersonaGPT'de:
+   - Yazılı veya sesli sohbet seçeneğini kullanın
+   - Persona ile etkileşime geçin
+   - Yanıtları sesli olarak dinleyin
 
-3. **Ekonomik Kaygılı Milliyetçiler**
-   - Ulusal değerlere bağlı, ekonomi odaklı
-   - Ekonomik kaygıları yüksek
-   - Milliyetçi değerlere sahip
+## Teknik Detaylar
 
-4. **Kararsız ve Sisteme Mesafeli Gençler**
-   - Gelecek kaygılı, sistem eleştirisi
-   - Ekonomik sıkıntılar ve gelecek endişesi
-   - Sisteme mesafeli genç kesim
-
-## Teknolojiler
-
-- Python 3.12
-- Streamlit
-- Plotly
-- Google Gemini API
-- Hugging Face API
+- **Frontend**: Streamlit
+- **Veri Görselleştirme**: Plotly
+- **AI Modeli**: Google Gemini
+- **Ses İşleme**: gTTS, SpeechRecognition
+- **Veri İşleme**: Pandas, NumPy
 
 ## Katkıda Bulunma
 
@@ -84,7 +58,7 @@ Uygulama http://localhost:8501 adresinde çalışacaktır.
 2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
 3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
 4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
-5. Bir Pull Request oluşturun
+5. Pull Request oluşturun
 
 ## Lisans
 
@@ -94,4 +68,57 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 Baran Can Ercan - [@barancanercan](https://github.com/barancanercan)
 
-Proje Linki: [https://github.com/barancanercan/turk-secmen-personalari](https://github.com/barancanercan/turk-secmen-personalari) 
+Proje Linki: [https://github.com/barancanercan/turk-secmen-personalari](https://github.com/barancanercan/turk-secmen-personalari)
+
+# Persona Kartı Uygulaması
+
+Bu uygulama, seçilen persona ile etkileşimli bir sohbet deneyimi sunar ve metin-konuşma dönüşümü için Google Cloud TTS kullanır.
+
+## Kurulum
+
+1. Gerekli Python paketlerini yükleyin:
+```bash
+pip install -r requirements.txt
+```
+
+2. Google Cloud TTS Kurulumu:
+   - [Google Cloud Console](https://console.cloud.google.com)'a gidin
+   - Yeni bir proje oluşturun veya mevcut bir projeyi seçin
+   - Cloud Text-to-Speech API'yi etkinleştirin
+   - Servis hesabı oluşturun:
+     - "IAM ve Yönetim" > "Servis Hesapları" bölümüne gidin
+     - "Servis Hesabı Oluştur" butonuna tıklayın
+     - Servis hesabına "Cloud Text-to-Speech API Kullanıcısı" rolünü atayın
+     - JSON anahtar dosyasını indirin
+   - İndirilen JSON anahtar dosyasını güvenli bir konuma kaydedin
+   - Aşağıdaki ortam değişkenini ayarlayın:
+     ```bash
+     export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-file.json"
+     ```
+
+3. Uygulamayı çalıştırın:
+```bash
+streamlit run app.py
+```
+
+## Özellikler
+
+- Persona seçimi ve etkileşimli sohbet
+- Google Cloud TTS ile yüksek kaliteli ses sentezi
+- Türkçe dil desteği
+- Farklı persona sesleri
+
+## Persona Sesleri
+
+Uygulama aşağıdaki persona seslerini destekler:
+- Hatice Teyze: tr-TR-Wavenet-A (Kadın sesi)
+- Kenan Bey: tr-TR-Wavenet-B (Erkek sesi)
+- Tuğrul Bey: tr-TR-Wavenet-C (Erkek sesi)
+- Elif: tr-TR-Wavenet-D (Kadın sesi)
+- Koray: tr-TR-Wavenet-E (Erkek sesi)
+
+## Notlar
+
+- Google Cloud TTS ücretsiz katmanı ayda 1-4 milyon karakter içerir
+- Ses kalitesi WaveNet teknolojisi ile optimize edilmiştir
+- Tüm sesler Türkçe dil desteğine sahiptir 

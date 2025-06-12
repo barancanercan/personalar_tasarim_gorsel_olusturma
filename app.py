@@ -9,17 +9,77 @@ from PIL import Image
 import io
 import base64
 import asyncio
+import speech_recognition as sr
+from gtts import gTTS
+import tempfile
+import os
 from src.models.gemini_handler import GeminiHandler
 from src.utils.config import (
-    PERSONA_IMAGE_PROMPTS,
     ERROR_MESSAGES,
-    STYLE_MAPPINGS
+    STYLE_MAPPINGS,
+    PERSONA_CARDS,
+    PERSONA_IMAGE_PROMPTS
 )
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Configure Gemini API
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Initialize speech recognizer
+recognizer = sr.Recognizer()
+
+# Initialize Gemini handler
+gemini_handler = GeminiHandler(os.getenv("GEMINI_API_KEY"))
+
+# Map persona names to their photo files
+photo_mapping = {
+    # Original personas
+    "Hatice Teyze": "hatice_teyze.jpg",
+    "Kenan Bey": "kenan_bey.jpg",
+    "Tuğrul Bey": "tugrul_bey.jpg",
+    "Elif": "elif.jpg",
+    
+    # Persona types
+    "Geleneksel Muhafazakar Çekirdek": "hatice_teyze.jpg",  # Using Hatice Teyze's photo
+    "Geleneksel Muhafazakar": "hatice_teyze.jpg",  # Using Hatice Teyze's photo
+    "Genç Modern": "elif.jpg",  # Using Elif's photo
+    "Kentsel Aydın": "tugrul_bey.jpg",  # Using Tuğrul Bey's photo
+    "Kırsal Kökler": "kenan_bey.jpg"  # Using Kenan Bey's photo
+}
+default_photo = "persona_profil_fotoğrafları/default.jpg"
+
+def text_to_speech(text, persona_name, lang='tr'):
+    """Convert text to speech using gTTS"""
+    try:
+        # Create a temporary file to store the audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            # Initialize gTTS with Turkish language and faster speed
+            tts = gTTS(text=text, lang=lang, slow=False)
+            # Save the audio to the temporary file
+            tts.save(temp_file.name)
+            return temp_file.name
+    except Exception as e:
+        st.error(f"gTTS hatası: {str(e)}")
+        return None
+
+def speech_to_text():
+    """Convert speech to text using microphone input"""
+    try:
+        with sr.Microphone() as source:
+            st.info("Dinleniyor... Konuşmaya başlayabilirsiniz.")
+            audio = recognizer.listen(source)
+            text = recognizer.recognize_google(audio, language="tr-TR")
+            return text
+    except sr.UnknownValueError:
+        st.error("Ses anlaşılamadı")
+        return None
+    except sr.RequestError as e:
+        st.error(f"Google Speech Recognition servisi hatası: {e}")
+        return None
 
 # Page config
 st.set_page_config(
@@ -32,437 +92,593 @@ st.set_page_config(
 # Custom CSS for dark mode
 st.markdown("""
 <style>
-    .main, .stApp {
-        background: #18191a !important;
-    }
-    .persona-card {
-        background: #23272f;
-        border-radius: 20px;
-        padding: 20px;
-        margin: 10px 0;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    /* Global Styles */
+    body {
         color: #f1f1f1;
+        background-color: #0a0a0a;
+        font-family: 'Inter', sans-serif;
     }
-    .persona-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
+    .stApp {
+        background-color: #0a0a0a;
     }
-    .persona-icon {
-        font-size: 2em;
-        margin-right: 15px;
+    .css-1d391kg {
+        background-color: #0a0a0a;
     }
-    .persona-title {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #f1f1f1;
+    .css-1y4pm5y {
+        background-color: #1a1a1a;
     }
-    .persona-subtitle {
-        color: #b0b3b8;
-        font-size: 0.9em;
-    }
-    .stat-item {
-        background: #23272f;
-        color: #f1f1f1;
-        padding: 10px;
-        border-radius: 10px;
-        margin: 5px 0;
-        border-left: 3px solid #444;
-    }
-    .tag {
-        background: #393e46;
-        color: #f1f1f1;
-        padding: 5px 10px;
-        border-radius: 15px;
-        margin: 2px;
-        display: inline-block;
-        font-size: 0.8em;
-        border: 1px solid #444;
-    }
-    .metric-card {
-        background: #23272f;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 5px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        color: #f1f1f1;
-    }
-    .metric-value {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #f1f1f1;
-    }
-    .metric-label {
-        color: #b0b3b8;
-        font-size: 0.9em;
-    }
-    .stDataFrame, .stTable {
-        background: #23272f !important;
-        color: #f1f1f1 !important;
-    }
-    .stMarkdown, .stText, .stTitle, .stHeader, .stSubheader {
-        color: #f1f1f1 !important;
-    }
-    .image-gen-card {
-        background: #23272f;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        padding: 32px 24px;
-        margin: 0 auto 32px auto;
-        max-width: 800px;
-        color: #f1f1f1;
-        text-align: center;
-    }
-    .image-gen-title {
-        font-size: 2em;
-        font-weight: 700;
-        margin-bottom: 24px;
-        color: #f1f1f1;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    .image-gen-subtitle {
-        font-size: 1.1em;
-        color: #b0b3b8;
-        margin-bottom: 32px;
-    }
-    .image-gen-select {
-        background: #393e46;
-        color: #f1f1f1;
-        border: 1px solid #444;
-        border-radius: 8px;
-        padding: 8px 16px;
-        margin-bottom: 24px;
-        width: 100%;
-        max-width: 400px;
-    }
-    .image-gen-btn {
-        background: linear-gradient(135deg, #4c51bf 0%, #3e489c 100%);
+
+    /* Button Styles */
+    .stButton>button {
+        background-color: #4CAF50;
         color: white;
-        padding: 14px 36px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 1.1em;
-        border: none;
-        margin: 24px 0;
-        box-shadow: 0 4px 12px rgba(76, 81, 191, 0.3);
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    .image-gen-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(76, 81, 191, 0.4);
-    }
-    .image-gen-btn:active {
-        transform: translateY(0);
-    }
-    .image-gen-img {
-        max-width: 100%;
         border-radius: 12px;
-        margin-top: 32px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-        transition: transform 0.3s ease;
+        border: none;
+        padding: 12px 24px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 8px 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .image-gen-img:hover {
-        transform: scale(1.02);
+    .stButton>button:hover {
+        background-color: #45a049;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0,0,0,0.2);
     }
-    .loading-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 32px;
+
+    /* Input Styles */
+    .stSelectbox, .stRadio, .stTextInput, .stTextArea {
+        background-color: #1a1a1a;
+        color: #f1f1f1;
+        border-radius: 12px;
+        border: 1px solid #333;
+        padding: 8px;
     }
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid #4c51bf;
-        border-top: 4px solid transparent;
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #1a1a1a;
+    }
+    .stSelectbox div[data-baseweb="select"] input {
+        color: #f1f1f1;
+    }
+
+    /* Card Styles */
+    .persona-card {
+        background-color: #1a1a1a;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        border: 1px solid #333;
+    }
+    .persona-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+    }
+    .persona-card h3 {
+        color: #f1f1f1;
+        text-align: center;
+        margin-bottom: 16px;
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+    .persona-card .subtitle {
+        color: #bbb;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.1em;
+    }
+
+    /* Metric Card Styles */
+    .metric-card {
+        background-color: #1a1a1a;
+        border-radius: 16px;
+        padding: 20px;
+        margin: 8px 0;
+        text-align: center;
+        color: #f1f1f1;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: 1px solid #333;
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    .metric-card .value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #4CAF50;
+        margin-bottom: 8px;
+    }
+    .metric-card .label {
+        font-size: 1em;
+        color: #ccc;
+    }
+
+    /* Profile Container Styles */
+    .profile-container {
+        text-align: center;
+        margin: 24px 0;
+        padding: 24px;
+        background-color: #1a1a1a;
+        border-radius: 20px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        border: 1px solid #333;
+        transition: all 0.3s ease;
+    }
+    .profile-container:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+    }
+    .profile-image {
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        object-fit: cover;
+        border: 4px solid #4CAF50;
+        margin: 0 auto;
+        display: block;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    .profile-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+    .profile-name {
+        color: #f1f1f1;
+        font-size: 1.6em;
+        margin-top: 20px;
+        font-weight: 600;
+    }
+    .profile-bio {
+        color: #ccc;
+        font-size: 1.1em;
+        margin-top: 12px;
+        padding: 0 24px;
+        line-height: 1.6;
+    }
+
+    /* Chat Styles */
+    .stChatMessage {
+        border-radius: 20px;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+        max-width: 80%;
+        position: relative;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stChatMessage.user {
+        background-color: #4CAF50;
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+    .stChatMessage.assistant {
+        background-color: #1a1a1a;
+        color: white;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+        border: 1px solid #333;
+    }
+
+    /* Section Headers */
+    h1, h2, h3, h4, h5, h6 {
+        color: #f1f1f1;
+        font-weight: 600;
         margin-bottom: 16px;
     }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+
+    /* List Styles */
+    ul, ol {
+        padding-left: 24px;
     }
-    .error-message {
-        background: rgba(220, 53, 69, 0.1);
-        border: 1px solid rgba(220, 53, 69, 0.3);
-        color: #dc3545;
-        padding: 16px;
-        border-radius: 8px;
-        margin: 16px 0;
+    li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+    }
+
+    /* Tag Styles */
+    .tag {
+        background-color: #333;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        margin: 4px;
+        display: inline-block;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+    }
+    .tag:hover {
+        background-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+
+    /* Chart Styles */
+    .js-plotly-plot {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Title
-st.title("Türk Toplumu Seçmen Personaları")
-st.markdown("Kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili")
+def main():
+    # Title
+    st.title("Türk Toplumu Seçmen Personaları")
+    st.markdown("Kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili")
 
-# Initialize Gemini handler
-gemini_handler = GeminiHandler(api_key=st.secrets["GOOGLE_API_KEY"])
+    # Sidebar with enhanced filters
+    st.sidebar.title("Filtreler ve Analizler")
 
-# Persona image generation prompts
-persona_image_prompts = {
-    "Geleneksel Muhafazakar Çekirdek": "A portrait of a 55-year-old Turkish woman, wearing a headscarf, looking thoughtful and serene. She is in a traditional Anatolian home setting, with subtle cultural motifs in the background. The image should convey a sense of strong family values and religious faith. Realistic style, portrait photo.",
-    "Kentli Laik Modernler": "A stylish portrait of a 30-year-old Turkish professional, gender-neutral, in a modern urban environment like a bustling city street or a contemporary cafe. They are holding a book or a tablet, looking confident and intellectually curious. The image should convey a sense of modern, open-minded, and progressive values. Realistic style, vibrant colors.",
-    "Ekonomik Kaygılı Milliyetçiler": "A portrait of a 40-year-old Turkish man, with a serious but determined expression, symbolizing national pride and concern for the economy. He is dressed in casual, practical clothing, perhaps with a subtle Turkish flag emblem. The background suggests a mix of urban and industrial elements, reflecting economic struggles. Realistic style, strong and grounded.",
-    "Kararsız ve Sisteme Mesafeli Gençler": "A contemporary portrait of a 20-year-old Turkish student, gender-neutral, with a slightly contemplative or uncertain expression, looking towards the future. They are in a dynamic, possibly abstract urban setting with elements of technology and social media in the background, representing youth, questioning, and a search for direction. The image should capture a blend of hope and skepticism. Modern, somewhat artistic style."
-}
+    # Persona selection
+    selected_persona = st.sidebar.selectbox(
+        "Persona Seçin",
+        list(PERSONA_CARDS.keys()),
+        key="sidebar_persona_select"
+    )
 
-# Persona data with enhanced metrics
-personas = {
-    "Geleneksel Muhafazakar Çekirdek": {
-        "icon": "🕌",
-        "color": "#e74c3c",
-        "subtitle": "Değerlerine bağlı, sadık seçmen",
-        "stats": {
-            "Yaş Aralığı": "45-60+",
-            "Eğitim": "Lise/Ortaokul",
-            "Gelir": "Orta-Düşük",
-            "Konum": "Anadolu Şehirleri",
-            "Medya Tüketimi": "TV ve Yerel Medya",
-            "Sosyal Medya Kullanımı": "Düşük",
-            "Alışveriş Tercihi": "Yerel Marketler",
-            "Boş Zaman Aktiviteleri": "Aile Zamanı, Dini Etkinlikler"
-        },
-        "metrics": {
-            "Dindarlık Endeksi": 85,
-            "Parti Bağlılığı": 90,
-            "Kurumsal Güven": 75,
-            "Ekonomik Endişe": 65,
-            "Geleneksel Değerlere Bağlılık": 95,
-            "Aile Değerleri": 90,
-            "Toplumsal Değişime Açıklık": 40,
-            "Teknoloji Adaptasyonu": 35
-        },
-        "description": "Geleneksel değerlere sıkı sıkıya bağlı, dini inançları güçlü, genellikle orta yaş ve üzeri kadınlardan oluşan bu grup, Anadolu'da yaşayan ve mevcut iktidar partilerine sadık bir seçmen kitlesini temsil eder.",
-        "tags": ["AK Parti", "MHP", "Dindar", "Muhafazakar"],
-        "trends": {
-            "Ekonomi": -20,
-            "Özgürlükler": 10,
-            "Yolsuzluk": -15,
-            "Yaşam Kalitesi": -25,
-            "Güvenlik": 5,
-            "Eğitim": -10,
-            "Sağlık": -15,
-            "İstihdam": -20
-        },
-        "voting_history": {
-            "2018": "AK Parti",
-            "2019": "AK Parti",
-            "2023": "AK Parti"
-        },
-        "key_issues": [
-            "Dini değerlerin korunması",
-            "Aile yapısının güçlendirilmesi",
-            "Ekonomik istikrar",
-            "Güvenlik ve düzen"
-        ]
-    },
-    "Kentli Laik Modernler": {
-        "icon": "🏙️",
-        "color": "#3498db",
-        "subtitle": "Eğitimli, eleştirel düşünür",
-        "stats": {
-            "Yaş Aralığı": "25-44",
-            "Eğitim": "Üniversite+",
-            "Gelir": "Orta-Yüksek",
-            "Konum": "Büyükşehirler",
-            "Medya Tüketimi": "Dijital Medya",
-            "Sosyal Medya Kullanımı": "Yüksek",
-            "Alışveriş Tercihi": "Online Alışveriş",
-            "Boş Zaman Aktiviteleri": "Kültür-Sanat, Spor"
-        },
-        "metrics": {
-            "Dindarlık Endeksi": 30,
-            "Parti Bağlılığı": 60,
-            "Kurumsal Güven": 40,
-            "Ekonomik Endişe": 85,
-            "Modern Değerlere Bağlılık": 90,
-            "Bireysel Özgürlükler": 95,
-            "Toplumsal Değişime Açıklık": 85,
-            "Teknoloji Adaptasyonu": 90
-        },
-        "description": "Modern, kentli yaşam tarzını benimsemiş, eğitimli, laik değerlere önem veren ve mevcut hükümet politikalarına eleştirel yaklaşan kesim. Ekonomik ve özgürlükler konusundaki endişeleri siyasi tercihlerini etkiler.",
-        "tags": ["CHP", "İYİ Parti", "Laik", "Modernist"],
-        "trends": {
-            "Ekonomi": -35,
-            "Özgürlükler": -40,
-            "Yolsuzluk": -45,
-            "Yaşam Kalitesi": -30,
-            "Güvenlik": -25,
-            "Eğitim": -35,
-            "Sağlık": -30,
-            "İstihdam": -40
-        },
-        "voting_history": {
-            "2018": "CHP",
-            "2019": "CHP",
-            "2023": "CHP/İYİ Parti"
-        },
-        "key_issues": [
-            "Demokratik haklar",
-            "Ekonomik refah",
-            "Eğitim kalitesi",
-            "Çevre ve sürdürülebilirlik"
-        ]
-    },
-    "Ekonomik Kaygılı Milliyetçiler": {
-        "icon": "🇹🇷",
-        "color": "#f39c12",
-        "subtitle": "Ulusal değerlere bağlı, ekonomi odaklı",
-        "stats": {
-            "Yaş Aralığı": "25-50",
-            "Eğitim": "Lise/Üniversite",
-            "Gelir": "Orta",
-            "Konum": "Karma",
-            "Medya Tüketimi": "TV ve Sosyal Medya",
-            "Sosyal Medya Kullanımı": "Orta",
-            "Alışveriş Tercihi": "Yerel ve Online Karma",
-            "Boş Zaman Aktiviteleri": "Spor, Sosyal Etkinlikler"
-        },
-        "metrics": {
-            "Dindarlık Endeksi": 50,
-            "Parti Bağlılığı": 70,
-            "Kurumsal Güven": 60,
-            "Ekonomik Endişe": 90,
-            "Milliyetçilik": 85,
-            "Ekonomik Güvenlik": 75,
-            "Toplumsal Değişime Açıklık": 45,
-            "Teknoloji Adaptasyonu": 60
-        },
-        "description": "Ekonomik kaygıları yüksek, milliyetçi değerlere bağlı, mülteci sorununa hassasiyet gösteren kesim. Geleneksel sağ partilere bağlılıkları olsa da ekonomik sıkıntılar ve ulusal kimlik meseleleri öncelik.",
-        "tags": ["MHP", "Zafer Partisi", "Milliyetçi", "Ekonomi"],
-        "trends": {
-            "Ekonomi": -40,
-            "Özgürlükler": -20,
-            "Yolsuzluk": -35,
-            "Yaşam Kalitesi": -35,
-            "Güvenlik": -30,
-            "Eğitim": -25,
-            "Sağlık": -30,
-            "İstihdam": -45
-        },
-        "voting_history": {
-            "2018": "MHP",
-            "2019": "MHP",
-            "2023": "MHP/Zafer Partisi"
-        },
-        "key_issues": [
-            "Ekonomik istikrar",
-            "Ulusal güvenlik",
-            "İstihdam",
-            "Göç politikaları"
-        ]
-    },
-    "Kararsız ve Sisteme Mesafeli Gençler": {
-        "icon": "🤔",
-        "color": "#9b59b6",
-        "subtitle": "Gelecek kaygılı, sistem eleştirisi",
-        "stats": {
-            "Yaş Aralığı": "18-34",
-            "Eğitim": "Lise/Üniversite",
-            "Gelir": "Düşük-Orta",
-            "Konum": "Çeşitli",
-            "Medya Tüketimi": "Sosyal Medya",
-            "Sosyal Medya Kullanımı": "Çok Yüksek",
-            "Alışveriş Tercihi": "Online Alışveriş",
-            "Boş Zaman Aktiviteleri": "Dijital İçerik, Sosyal Etkinlikler"
-        },
-        "metrics": {
-            "Dindarlık Endeksi": 25,
-            "Parti Bağlılığı": 20,
-            "Kurumsal Güven": 15,
-            "Ekonomik Endişe": 95,
-            "Sistem Eleştirisi": 90,
-            "Değişim Talebi": 85,
-            "Toplumsal Değişime Açıklık": 95,
-            "Teknoloji Adaptasyonu": 95
-        },
-        "description": "Ekonomik sıkıntılar, gelecek kaygısı ve kurumsal güvensizlik nedeniyle siyasi sisteme mesafeli duran genç kesim. Geleneksel parti bağlılıkları zayıf, protesto oyu verme veya oy kullanmama eğilimi yüksek.",
-        "tags": ["Protesto", "Küçük Partiler", "Sisteme Mesafeli", "Genç"],
-        "trends": {
-            "Ekonomi": -45,
-            "Özgürlükler": -45,
-            "Yolsuzluk": -50,
-            "Yaşam Kalitesi": -45,
-            "Güvenlik": -35,
-            "Eğitim": -40,
-            "Sağlık": -35,
-            "İstihdam": -50
-        },
-        "voting_history": {
-            "2018": "Oy Kullanmadı",
-            "2019": "Küçük Partiler",
-            "2023": "Kararsız"
-        },
-        "key_issues": [
-            "İş imkanları",
-            "Eğitim sistemi",
-            "Gelecek kaygısı",
-            "Sistem değişikliği"
-        ]
-    }
-}
+    # Analysis type selection
+    analysis_type = st.sidebar.radio(
+        "Analiz Türü",
+        ["Genel Bakış", "Detaylı Analiz", "Karşılaştırma"],
+        key="analysis_type_radio"
+    )
 
-# Sidebar with enhanced filters
-st.sidebar.title("Filtreler ve Analizler")
+    # Module selection under analysis type
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### Modül Seçimi")
+    selected_menu = st.sidebar.radio(
+        "Modül Seçin",
+        ["PersonaGPT", "Analizler", "Persona Kartları"],
+        key="menu_radio"
+    )
 
-# Persona selection
-selected_persona = st.sidebar.selectbox(
-    "Persona Seçin",
-    list(personas.keys())
-)
+    if selected_menu == "PersonaGPT":
+        st.title("PersonaGPT")
+        st.markdown("### Persona ile Sohbet")
 
-# Analysis type selection
-analysis_type = st.sidebar.radio(
-    "Analiz Türü",
-    ["Genel Bakış", "Detaylı Analiz", "Karşılaştırma"]
-)
-
-# Sidebar: Add new module option
-menu = ["Analizler", "Persona Görsel Oluşturucu"]
-selected_menu = st.sidebar.radio("Modül Seçin", menu)
-
-if selected_menu == "Analizler":
-    # Main content
-    if analysis_type == "Genel Bakış":
-        col1, col2 = st.columns([2, 1])
-
+        # Create two columns for layout
+        col1, col2 = st.columns([1, 2])
+        
         with col1:
-            # Selected persona details
-            persona = personas[selected_persona]
-            st.markdown(f"""
-            <div class="persona-card">
-                <div class="persona-header">
-                    <span class="persona-icon">{persona['icon']}</span>
-                    <div>
-                        <div class="persona-title">{selected_persona}</div>
-                        <div class="persona-subtitle">{persona['subtitle']}</div>
-                    </div>
-                </div>
-                <div class="persona-description">{persona['description']}</div>
-                <div style="margin-top: 15px;">
-                    {''.join([f'<span class="tag">{tag}</span>' for tag in persona['tags']])}
-                </div>
-            </div>
+            # Persona selection with modern styling
+            st.markdown("""
+            <div style="background-color: #2b2b2b; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center;">
+                <h3 style="color: #f1f1f1; margin-top: 0;">Persona Seçin</h3>
             """, unsafe_allow_html=True)
+            
+            persona_choice = st.selectbox(
+                "",
+                list(PERSONA_CARDS.keys()),
+                key="personagpt_persona_select"
+            )
+            persona = PERSONA_CARDS[persona_choice]
+            
+            # Display profile photo and name in Instagram style
+            photo_file = photo_mapping.get(persona_choice)
+            if photo_file and os.path.exists(f"persona_profil_fotoğrafları/{photo_file}"):
+                photo_path = f"persona_profil_fotoğrafları/{photo_file}"
+                img_data = base64.b64encode(open(photo_path, 'rb').read()).decode()
+                st.markdown(f"""
+                <div class="profile-container">
+                    <img src="data:image/png;base64,{img_data}" class="profile-image">
+                    <div class="profile-name">{persona['name']}</div>
+                    <div class="profile-bio">{persona['bio'][0]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            elif os.path.exists(default_photo):
+                photo_path = default_photo
+                img_data = base64.b64encode(open(default_photo, 'rb').read()).decode()
+                st.markdown(f"""
+                <div class="profile-container">
+                    <img src="data:image/png;base64,{img_data}" class="profile-image">
+                    <div class="profile-name">{persona['name']}</div>
+                    <div class="profile-bio">{persona['bio'][0]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.error("Profil fotoğrafı bulunamadı.")
+                
+            # Display persona bio with modern card design
+            st.markdown("""
+            <style>
+                .basic-info-container {
+                    background-color: #2b2b2b;
+                    padding: 20px;
+                    border-radius: 15px;
+                    margin: 20px 0;
+                    border: 1px solid #4CAF50;
+                }
+                .basic-info-title {
+                    color: #f1f1f1;
+                    text-align: center;
+                    margin-bottom: 15px;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                }
+                .basic-info-content {
+                    color: #ccc;
+                    line-height: 1.6;
+                    text-align: left;
+                    padding: 0 20px;
+                }
+                .chat-input-container {
+                    background-color: #2b2b2b;
+                    padding: 15px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    border: 1px solid #4CAF50;
+                    max-width: 600px;
+                    width: 100%;
+                    text-align: center;
+                }
+                .stChatInput {
+                    background-color: #333 !important;
+                    border-radius: 25px !important;
+                    padding: 12px 15px !important;
+                    border: 1px solid #4CAF50 !important;
+                    color: white !important;
+                    font-size: 1em !important;
+                    width: 70% !important;
+                    margin: 0 auto !important;
+                }
+            </style>
+            <div class="basic-info-container">
+                <div class="basic-info-title">Temel Bilgiler</div>
+                <div class="basic-info-content">
+            """, unsafe_allow_html=True)
+            for bio in persona['bio']:
+                st.markdown(f"• {bio}")
+            st.markdown("</div></div>", unsafe_allow_html=True)
 
         with col2:
-            # Metrics visualization
-            metrics_df = pd.DataFrame({
-                'Metrik': list(persona['metrics'].keys()),
-                'Değer': list(persona['metrics'].values())
-            })
+            # Chat interface with modern styling
+            st.markdown("""
+            <div style="background-color: #2b2b2b; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                <h3 style="color: #f1f1f1; margin-top: 0; text-align: center;">Sohbet</h3>
+            </div>
+            """, unsafe_allow_html=True)
             
-            fig = px.bar(metrics_df, x='Metrik', y='Değer',
-                         color_discrete_sequence=[persona['color']],
-                         template='plotly_dark')
+            # Initialize chat history
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+
+            # Display chat history with modern styling
+            for message in st.session_state.chat_history:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # Chat type selection with modern styling
+            st.markdown("""
+            <style>
+                .chat-type-container {
+                    display: flex;
+                    justify-content: center;
+                    gap: 20px;
+                    margin: 30px 0;
+                }
+                .chat-type-button {
+                    background-color: #2b2b2b;
+                    color: white;
+                    border: 2px solid #4CAF50;
+                    padding: 20px 40px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-weight: 500;
+                    font-size: 1.2em;
+                    min-width: 200px;
+                    text-align: center;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                .chat-type-button:hover {
+                    background-color: #4CAF50;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+                }
+                .chat-type-button.active {
+                    background-color: #4CAF50;
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+                }
+                .chat-type-icon {
+                    font-size: 1.5em;
+                    margin-bottom: 10px;
+                    display: block;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            # Chat type buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                text_chat = st.button("✍️ Yazılı Sohbet", key="text_chat_button", use_container_width=True)
+            with col2:
+                voice_chat = st.button("🎤 Sesli Sohbet", key="voice_chat_button", use_container_width=True)
+            
+            # Set chat type based on button clicks
+            if text_chat:
+                st.session_state.chat_type = "text"
+            elif voice_chat:
+                st.session_state.chat_type = "voice"
+            
+            # Initialize chat type if not set
+            if "chat_type" not in st.session_state:
+                st.session_state.chat_type = "text"
+            
+            if st.session_state.chat_type == "text":
+                # Text chat input with modern styling
+                st.markdown("""
+                <div class="chat-input-container">
+                """, unsafe_allow_html=True)
+                
+                if prompt := st.chat_input("Mesajınızı yazın...", key="chat_input"):
+                    # Add user message to chat history
+                    st.session_state.chat_history.append({"role": "user", "content": prompt})
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
+                    
+                    # Generate persona response using Gemini Flash
+                    persona_prompt = f"""
+                    Sen {persona['name']} olarak konuşuyorsun. Aşağıdaki özelliklere sahipsin:
+                    Temel Bilgiler:
+                    {', '.join(persona['bio'])}
+                    Geçmiş ve Değerler:
+                    {', '.join(persona['lore'])}
+                    Bilgi ve Görüşler:
+                    {', '.join(persona['knowledge'])}
+                    Sohbet Tarzı:
+                    {', '.join(persona['style']['chat'])}
+                    Lütfen bu özelliklere uygun şekilde yanıt ver. Kendi karakterine uygun bir dille konuş.
+                    Yanıtını tek bir bütün halinde ver, maddeler halinde değil.
+                    """
+                    response = gemini_handler.generate_text(persona_prompt + "\n\nKullanıcı: " + prompt)
+
+                    # Add assistant message to chat history
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+                    # Display assistant message
+                    with st.chat_message("assistant"):
+                        st.markdown(response)
+                    
+                    # Voice response option with modern styling
+                    st.markdown("""
+                    <div style="text-align: center; margin: 20px 0;">
+                    """, unsafe_allow_html=True)
+                    if st.button("🎤 Sesli Yanıt", key="voice_response_button", help="Yanıtı sesli olarak dinle"):
+                        audio_file = text_to_speech(response, persona_choice)
+                        if audio_file:
+                            st.audio(audio_file, format='audio/mp3')
+                            os.unlink(audio_file)  # Delete temporary file
+                    st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+            else:  # Voice chat
+                st.markdown("""
+                <div style="background-color: #2b2b2b; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center;">
+                    <h4 style="color: #f1f1f1; margin-top: 0;">Sesli Sohbet</h4>
+                    <p style="color: #ccc; margin-bottom: 20px;">Konuşmak için butona basılı tutun</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("🎤 Konuşmak için basılı tutun", key="voice_input_button", use_container_width=True):
+                    user_input = speech_to_text()
+                    if user_input:
+                        st.session_state.chat_history.append({"role": "user", "content": user_input})
+                        with st.chat_message("user"):
+                            st.markdown(user_input)
+
+                        # Generate persona response using Gemini Flash
+                        persona_prompt = f"""
+                        Sen {persona['name']} olarak konuşuyorsun. Aşağıdaki özelliklere sahipsin:
+                        Temel Bilgiler:
+                        {', '.join(persona['bio'])}
+                        Geçmiş ve Değerler:
+                        {', '.join(persona['lore'])}
+                        Bilgi ve Görüşler:
+                        {', '.join(persona['knowledge'])}
+                        Sohbet Tarzı:
+                        {', '.join(persona['style']['chat'])}
+                        Lütfen bu özelliklere uygun şekilde yanıt ver. Kendi karakterine uygun bir dille konuş.
+                        Yanıtını tek bir bütün halinde ver, maddeler halinde değil.
+                        """
+                        response = gemini_handler.generate_text(persona_prompt + "\n\nKullanıcı: " + user_input)
+
+                        # Add assistant message to chat history
+                        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+                        # Display assistant message
+                        with st.chat_message("assistant"):
+                            st.markdown(response)
+
+                        # Convert response to speech
+                        audio_file = text_to_speech(response, persona_choice)
+                        if audio_file:
+                            st.audio(audio_file, format='audio/mp3')
+                            os.unlink(audio_file)  # Delete temporary file
+
+    elif selected_menu == "Analizler":
+        # Main content
+        if analysis_type == "Genel Bakış":
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                # Selected persona details
+                persona = PERSONA_CARDS[selected_persona]
+                
+                # Display profile photo
+                photo_file = photo_mapping.get(selected_persona)
+                if photo_file and os.path.exists(f"persona_profil_fotoğrafları/{photo_file}"):
+                    photo_path = f"persona_profil_fotoğrafları/{photo_file}"
+                    img_data = base64.b64encode(open(photo_path, 'rb').read()).decode()
+                    st.markdown(f"""
+                    <div class="profile-container">
+                        <img src="data:image/png;base64,{img_data}" class="profile-image">
+                        <div class="profile-name">{persona['name']}</div>
+                        <div class="profile-bio">{persona['bio'][0]}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif os.path.exists(default_photo):
+                    photo_path = default_photo
+                    img_data = base64.b64encode(open(default_photo, 'rb').read()).decode()
+                    st.markdown(f"""
+                    <div class="profile-container">
+                        <img src="data:image/png;base64,{img_data}" class="profile-image">
+                        <div class="profile-name">{persona['name']}</div>
+                        <div class="profile-bio">{persona['bio'][0]}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.error("Profil fotoğrafı bulunamadı.")
+
+                st.markdown(f"""
+                <div class="persona-card">
+                    <h3>{selected_persona}</h3>
+                    <div class="subtitle">{persona['name']}</div>
+                    <p style="color: #ccc; text-align: center;">{', '.join(persona['bio'])}</p>
+                    <div style="text-align: center;">
+                        {''.join([f'<span style="background-color: #555; color: white; padding: 5px 10px; border-radius: 5px; margin: 2px; display: inline-block; font-size: 0.8em;">{tag}</span>' for tag in persona['adjectives']])}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                # Metrics visualization
+                metrics_df = pd.DataFrame({
+                    'Metrik': ['Sosyal Medya Kullanımı', 'Politik İlgi', 'Ekonomik Endişe', 'Kültürel Değerler'],
+                    'Değer': [len(persona['clients']), len(persona['topics']), len(persona['knowledge']), len(persona['lore'])]
+                })
+                fig = px.bar(metrics_df, x='Metrik', y='Değer',
+                             color_discrete_sequence=['#4CAF50'],
+                             template='plotly_dark')
+                fig.update_layout(
+                    title="Metrikler",
+                    showlegend=False,
+                    plot_bgcolor='#18191a',
+                    paper_bgcolor='#18191a',
+                    font=dict(color='#f1f1f1')
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+            # Trend analysis
+            st.markdown("### Trend Analizi")
+            trends = {
+                'Sosyal Medya': len(persona['clients']),
+                'Politik İlgi': len(persona['topics']),
+                'Ekonomik Endişe': len(persona['knowledge']),
+                'Kültürel Değerler': len(persona['lore'])
+            }
+            trends_df = pd.DataFrame({
+                'Kategori': list(trends.keys()),
+                'Değişim': list(trends.values())
+            })
+            fig = px.line(trends_df, x='Kategori', y='Değişim',
+                          markers=True, color_discrete_sequence=['#4CAF50'],
+                          template='plotly_dark')
             fig.update_layout(
-                title="Metrikler",
+                title="Trend Analizi",
                 showlegend=False,
                 plot_bgcolor='#18191a',
                 paper_bgcolor='#18191a',
@@ -470,224 +686,353 @@ if selected_menu == "Analizler":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-        # Trend analysis
-        st.markdown("### Trend Analizi")
-        trends = persona['trends']
-        trends_df = pd.DataFrame({
-            'Kategori': list(trends.keys()),
-            'Değişim': list(trends.values())
-        })
-        
-        fig = px.line(trends_df, x='Kategori', y='Değişim',
-                      markers=True, color_discrete_sequence=[persona['color']],
-                      template='plotly_dark')
-        fig.update_layout(
-            title="Trend Analizi",
-            showlegend=False,
-            plot_bgcolor='#18191a',
-            paper_bgcolor='#18191a',
-            font=dict(color='#f1f1f1')
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        elif analysis_type == "Detaylı Analiz":
+            persona = PERSONA_CARDS[selected_persona]
+            # Metrics cards with enhanced styling
+            metrics = {
+                'Sosyal Medya': len(persona['clients']),
+                'Politik İlgi': len(persona['topics']),
+                'Ekonomik Endişe': len(persona['knowledge']),
+                'Kültürel Değerler': len(persona['lore'])
+            }
+            num_metrics = len(metrics)
+            num_cols = 2
+            num_rows = (num_metrics + num_cols - 1) // num_cols  # Ceiling division
+            for row in range(num_rows):
+                cols = st.columns(num_cols)
+                for col in range(num_cols):
+                    idx = row * num_cols + col
+                    if idx < num_metrics:
+                        metric, value = list(metrics.items())[idx]
+                        with cols[col]:
+                            st.markdown(f"""
+                            <div class="metric-card">
+                                <div class="value">{value}</div>
+                                <div class="label">{metric}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
 
-    elif analysis_type == "Detaylı Analiz":
-        persona = personas[selected_persona]
-        
-        # Metrics cards with enhanced styling
-        metrics = list(persona['metrics'].items())
-        num_metrics = len(metrics)
-        num_cols = 4
-        num_rows = (num_metrics + num_cols - 1) // num_cols  # Ceiling division
-        
-        for row in range(num_rows):
-            cols = st.columns(num_cols)
-            for col in range(num_cols):
-                idx = row * num_cols + col
-                if idx < num_metrics:
-                    metric, value = metrics[idx]
-                    with cols[col]:
-                        st.markdown(f"""
-                        <div class="metric-card">
-                            <div class="metric-value">{value}</div>
-                            <div class="metric-label">{metric}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-        
-        # Detailed stats with enhanced visualization
-        st.markdown("### Demografik Özellikler")
-        stats_df = pd.DataFrame({
-            'Özellik': list(persona['stats'].keys()),
-            'Değer': list(persona['stats'].values())
-        })
-        st.dataframe(stats_df, use_container_width=True)
-        
-        # Voting history
-        st.markdown("### Seçim Geçmişi")
-        voting_df = pd.DataFrame({
-            'Yıl': list(persona['voting_history'].keys()),
-            'Tercih': list(persona['voting_history'].values())
-        })
-        st.dataframe(voting_df, use_container_width=True)
-        
-        # Key issues
-        st.markdown("### Öncelikli Konular")
-        for issue in persona['key_issues']:
-            st.markdown(f"- {issue}")
-        
-        # Enhanced radar chart for metrics
-        fig = go.Figure()
-        fig.add_trace(go.Scatterpolar(
-            r=list(persona['metrics'].values()),
-            theta=list(persona['metrics'].keys()),
-            fill='toself',
-            name=selected_persona,
-            line=dict(color=persona['color'])
-        ))
-        fig.update_layout(
-            polar=dict(
-                radialaxis=dict(
-                    visible=True,
-                    range=[0, 100],
-                    gridcolor='#444',
-                    linecolor='#888',
-                    tickfont_color='#f1f1f1',
-                ),
-                bgcolor='#18191a',
-            ),
-            showlegend=False,
-            title="Metrikler Radar Grafiği",
-            paper_bgcolor='#18191a',
-            font=dict(color='#f1f1f1')
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Trend analysis with enhanced visualization
-        st.markdown("### Trend Analizi")
-        trends = persona['trends']
-        trends_df = pd.DataFrame({
-            'Kategori': list(trends.keys()),
-            'Değişim': list(trends.values())
-        })
-        
-        fig = px.bar(trends_df, x='Kategori', y='Değişim',
-                     color='Değişim',
-                     color_continuous_scale=['#e74c3c', '#f39c12', '#3498db'],
-                     template='plotly_dark')
-        fig.update_layout(
-            title="Trend Analizi",
-            showlegend=False,
-            plot_bgcolor='#18191a',
-            paper_bgcolor='#18191a',
-            font=dict(color='#f1f1f1')
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            # Detailed stats with enhanced visualization
+            st.markdown("### Temel Bilgiler")
+            for bio in persona['bio']:
+                st.markdown(f"- {bio}")
 
-    else:  # Comparison
-        st.markdown("### Personalar Karşılaştırması")
-        
-        # Select personas to compare
-        compare_personas = st.multiselect(
-            "Karşılaştırılacak Personalar",
-            list(personas.keys()),
-            default=[selected_persona]
-        )
-        
-        if len(compare_personas) > 0:
-            # Metrics comparison
-            metrics_comparison = pd.DataFrame({
-                persona: personas[persona]['metrics']
-                for persona in compare_personas
-            })
-            st.markdown("#### Metrik Karşılaştırması")
-            st.dataframe(metrics_comparison, use_container_width=True)
-            
-            # Trends comparison
-            trends_comparison = pd.DataFrame({
-                persona: personas[persona]['trends']
-                for persona in compare_personas
-            })
-            st.markdown("#### Trend Karşılaştırması")
-            st.dataframe(trends_comparison, use_container_width=True)
-            
-            # Comparison chart
+            # Key issues
+            st.markdown("### Öncelikli Konular")
+            for topic in persona['topics']:
+                st.markdown(f"- {topic}")
+
+            # Enhanced radar chart for metrics
             fig = go.Figure()
-            for persona in compare_personas:
-                fig.add_trace(go.Scatterpolar(
-                    r=list(personas[persona]['metrics'].values()),
-                    theta=list(personas[persona]['metrics'].keys()),
-                    fill='toself',
-                    name=persona
-                ))
+            fig.add_trace(go.Scatterpolar(
+                r=list(metrics.values()),
+                theta=list(metrics.keys()),
+                fill='toself',
+                name=selected_persona,
+                line=dict(color='#4CAF50')
+            ))
             fig.update_layout(
                 polar=dict(
                     radialaxis=dict(
                         visible=True,
-                        range=[0, 100],
+                        range=[0, max(metrics.values())],
                         gridcolor='#444',
                         linecolor='#888',
                         tickfont_color='#f1f1f1',
                     ),
                     bgcolor='#18191a',
                 ),
-                showlegend=True,
-                title="Metrikler Karşılaştırma Grafiği",
+                showlegend=False,
+                title="Metrikler Radar Grafiği",
                 paper_bgcolor='#18191a',
                 font=dict(color='#f1f1f1')
             )
             st.plotly_chart(fig, use_container_width=True)
 
-    # Footer
-    st.markdown("---")
-    st.markdown("Bu analiz, kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili üzerine yapılmıştır.")
+        else:  # Comparison
+            st.markdown("### Personalar Karşılaştırması")
+            # Select personas to compare
+            compare_personas = st.multiselect(
+                "Karşılaştırılacak Personalar",
+                list(PERSONA_CARDS.keys()),
+                default=[selected_persona]
+            )
+            if len(compare_personas) > 0:
+                # Metrics comparison
+                metrics_comparison = pd.DataFrame({
+                    persona: {
+                        'Sosyal Medya': len(PERSONA_CARDS[persona]['clients']),
+                        'Politik İlgi': len(PERSONA_CARDS[persona]['topics']),
+                        'Ekonomik Endişe': len(PERSONA_CARDS[persona]['knowledge']),
+                        'Kültürel Değerler': len(PERSONA_CARDS[persona]['lore'])
+                    }
+                    for persona in compare_personas
+                })
+                st.markdown("#### Metrik Karşılaştırması")
+                st.dataframe(metrics_comparison, use_container_width=True)
 
-elif selected_menu == "Persona Görsel Oluşturucu":
-    st.markdown('<div class="image-gen-card">', unsafe_allow_html=True)
-    st.markdown('<div class="image-gen-title">Persona Görsel Oluşturucu</div>', unsafe_allow_html=True)
-    st.markdown('<div class="image-gen-subtitle">Seçtiğiniz persona için yapay zeka destekli görsel oluşturun</div>', unsafe_allow_html=True)
-    
-    persona_choice = st.selectbox("Persona Seçin", list(PERSONA_IMAGE_PROMPTS.keys()), key="persona_image_select")
+                # Comparison chart
+                fig = go.Figure()
+                max_value = 0
+                for persona in compare_personas:
+                    metrics = {
+                        'Sosyal Medya': len(PERSONA_CARDS[persona]['clients']),
+                        'Politik İlgi': len(PERSONA_CARDS[persona]['topics']),
+                        'Ekonomik Endişe': len(PERSONA_CARDS[persona]['knowledge']),
+                        'Kültürel Değerler': len(PERSONA_CARDS[persona]['lore'])
+                    }
+                    max_value = max(max_value, max(metrics.values()))
+                    fig.add_trace(go.Scatterpolar(
+                        r=list(metrics.values()),
+                        theta=list(metrics.keys()),
+                        fill='toself',
+                        name=persona
+                    ))
+                fig.update_layout(
+                    polar=dict(
+                        radialaxis=dict(
+                            visible=True,
+                            range=[0, max_value],
+                            gridcolor='#444',
+                            linecolor='#888',
+                            tickfont_color='#f1f1f1',
+                        ),
+                        bgcolor='#18191a',
+                    ),
+                    showlegend=True,
+                    title="Metrikler Karşılaştırma Grafiği",
+                    paper_bgcolor='#18191a',
+                    font=dict(color='#f1f1f1')
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
-    if 'image_url' not in st.session_state:
-        st.session_state['image_url'] = None
-    if 'loading_image' not in st.session_state:
-        st.session_state['loading_image'] = False
-        
-    # Custom prompt input
-    st.subheader("Görsel Oluşturma Ayarları")
-    custom_prompt = st.text_area(
-        "Özel Prompt (İsteğe bağlı)",
-        value=PERSONA_IMAGE_PROMPTS[persona_choice],
-        help="Görsel oluşturmak için özel bir prompt girebilirsiniz. Boş bırakırsanız varsayılan prompt kullanılır."
-    )
+        # Footer
+        st.markdown("---")
+        st.markdown("Bu analiz, kümeleme analizi sonucunda ortaya çıkan dört belirgin seçmen profili üzerine yapılmıştır.")
 
-    if st.button("Görsel Oluştur", key="imagegen", help="Seçilen persona için yapay zeka ile görsel oluştur.",
-                type="primary"):
-        st.session_state['loading_image'] = True
-        st.session_state['image_url'] = None
-        
-        # Use custom prompt if provided, otherwise use default
-        prompt = custom_prompt if custom_prompt else PERSONA_IMAGE_PROMPTS[persona_choice]
-        
-        result = gemini_handler.generate_image(prompt)
-        
-        if result["success"]:
-            st.session_state['image_url'] = result["image_url"]
-        else:
-            st.error(result["error"])
-            
-        st.session_state['loading_image'] = False
-        
-    if st.session_state['loading_image']:
-        st.markdown("""
-        <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <div>Görsel oluşturuluyor, lütfen bekleyin...</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    if st.session_state.get('image_url'):
-        st.image(st.session_state['image_url'], 
-                 caption=f"{persona_choice} için oluşturulan görsel", 
-                 use_column_width=True)
-        
-    st.markdown('</div>', unsafe_allow_html=True)
+    elif selected_menu == "Persona Kartları":
+        st.title("Persona Kartları")
+
+        # Persona selection
+        persona_choice = st.selectbox(
+            "Persona Seçin",
+            list(PERSONA_CARDS.keys()),
+            key="persona_cards_select"
+        )
+        persona = PERSONA_CARDS[persona_choice]
+
+        # Create two columns for layout
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            # Display persona profile photo
+            photo_file = photo_mapping.get(persona_choice)
+            if photo_file and os.path.exists(f"persona_profil_fotoğrafları/{photo_file}"):
+                photo_path = f"persona_profil_fotoğrafları/{photo_file}"
+                img_data = base64.b64encode(open(photo_path, 'rb').read()).decode()
+                st.markdown(f"""
+                <div class="profile-container">
+                    <img src="data:image/png;base64,{img_data}" class="profile-image">
+                    <div class="profile-name">{persona['name']}</div>
+                    <div class="profile-bio">{persona['bio'][0]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            elif os.path.exists(default_photo):
+                photo_path = default_photo
+                img_data = base64.b64encode(open(default_photo, 'rb').read()).decode()
+                st.markdown(f"""
+                <div class="profile-container">
+                    <img src="data:image/png;base64,{img_data}" class="profile-image">
+                    <div class="profile-name">{persona['name']}</div>
+                    <div class="profile-bio">{persona['bio'][0]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.error("Profil fotoğrafı bulunamadı.")
+
+            # Analysis type selection
+            analysis_type = st.radio(
+                "Analiz Türü",
+                ["Genel Bakış", "Detaylı Analiz", "Karşılaştırma"],
+                key="persona_cards_analysis_type"
+            )
+
+            if analysis_type == "Detaylı Analiz":
+                # Metrics cards with enhanced styling
+                metrics = {
+                    'Sosyal Medya': len(persona['clients']),
+                    'Politik İlgi': len(persona['topics']),
+                    'Ekonomik Endişe': len(persona['knowledge']),
+                    'Kültürel Değerler': len(persona['lore'])
+                }
+                num_metrics = len(metrics)
+                num_cols = 2
+                num_rows = (num_metrics + num_cols - 1) // num_cols
+                for row in range(num_rows):
+                    cols = st.columns(num_cols)
+                    for col in range(num_cols):
+                        idx = row * num_cols + col
+                        if idx < num_metrics:
+                            metric, value = list(metrics.items())[idx]
+                            with cols[col]:
+                                st.markdown(f"""
+                                <div class="metric-card">
+                                    <div class="value">{value}</div>
+                                    <div class="label">{metric}</div>
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                # Enhanced radar chart for metrics
+                fig = go.Figure()
+                fig.add_trace(go.Scatterpolar(
+                    r=list(metrics.values()),
+                    theta=list(metrics.keys()),
+                    fill='toself',
+                    name=persona_choice,
+                    line=dict(color='#4CAF50')
+                ))
+                fig.update_layout(
+                    polar=dict(
+                        radialaxis=dict(
+                            visible=True,
+                            range=[0, max(metrics.values())],
+                            gridcolor='#444',
+                            linecolor='#888',
+                            tickfont_color='#f1f1f1',
+                        ),
+                        bgcolor='#18191a',
+                    ),
+                    showlegend=False,
+                    title="Metrikler Radar Grafiği",
+                    paper_bgcolor='#18191a',
+                    font=dict(color='#f1f1f1')
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+        with col2:
+            # Add custom CSS for expandable sections
+            st.markdown("""
+            <style>
+                .expandable-section {
+                    background-color: #1a1a1a;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    border: 1px solid #333;
+                    transition: all 0.3s ease;
+                }
+                .expandable-section:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+                }
+                .section-header {
+                    color: #4CAF50;
+                    font-size: 1.4em;
+                    font-weight: 600;
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    cursor: pointer;
+                }
+                .section-content {
+                    color: #f1f1f1;
+                    padding-left: 20px;
+                }
+                .section-content ul {
+                    list-style-type: none;
+                    padding-left: 0;
+                }
+                .section-content li {
+                    margin-bottom: 10px;
+                    padding-left: 20px;
+                    position: relative;
+                }
+                .section-content li:before {
+                    content: "•";
+                    color: #4CAF50;
+                    position: absolute;
+                    left: 0;
+                }
+                .tag-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .tag {
+                    background-color: #333;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 0.9em;
+                    transition: all 0.3s ease;
+                }
+                .tag:hover {
+                    background-color: #4CAF50;
+                    transform: translateY(-2px);
+                }
+            </style>
+            """, unsafe_allow_html=True)
+
+            # Bio section
+            with st.expander("Temel Bilgiler", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                """, unsafe_allow_html=True)
+                for bio in persona['bio']:
+                    st.markdown(f"- {bio}")
+                st.markdown("</div></div>", unsafe_allow_html=True)
+
+            # Adjectives section
+            with st.expander("Öne Çıkan Özellikler", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                        <div class="tag-container">
+                """, unsafe_allow_html=True)
+                for adj in persona['adjectives']:
+                    st.markdown(f'<span class="tag">{adj}</span>', unsafe_allow_html=True)
+                st.markdown("</div></div></div>", unsafe_allow_html=True)
+
+            # Social media usage
+            with st.expander("Sosyal Medya Kullanımı", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                """, unsafe_allow_html=True)
+                for client in persona['clients']:
+                    st.markdown(f"- {client}")
+                st.markdown("</div></div>", unsafe_allow_html=True)
+
+            # Lore section
+            with st.expander("Geçmiş ve Değerler", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                """, unsafe_allow_html=True)
+                for lore in persona['lore']:
+                    st.markdown(f"- {lore}")
+                st.markdown("</div></div>", unsafe_allow_html=True)
+
+            # Knowledge section
+            with st.expander("Bilgi ve Görüşler", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                """, unsafe_allow_html=True)
+                for knowledge in persona['knowledge']:
+                    st.markdown(f"- {knowledge}")
+                st.markdown("</div></div>", unsafe_allow_html=True)
+
+            # Topics section
+            with st.expander("İlgilendiği Konular", expanded=True):
+                st.markdown("""
+                <div class="expandable-section">
+                    <div class="section-content">
+                """, unsafe_allow_html=True)
+                for topic in persona['topics']:
+                    st.markdown(f"- {topic}")
+                st.markdown("</div></div>", unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()

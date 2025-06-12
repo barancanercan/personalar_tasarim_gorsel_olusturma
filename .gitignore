@@ -31,27 +31,23 @@ env/
 *.swp
 *.swo
 
-# Streamlit
-.streamlit/secrets.toml
-
-# OS
-.DS_Store
-Thumbs.db
-
 # Environment variables
 .env
-.env.*
+.env.local
 
 # Logs
 *.log
-logs/
-log/
 
-# Local development
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Local development settings
+.DS_Store
+Thumbs.db
+
+# Project specific
+persona_profil_fotoğrafları/
+*.mp3
+
+# Streamlit
+.streamlit/secrets.toml
 
 # Cache
 .cache/
@@ -62,4 +58,7 @@ htmlcov/
 # Distribution
 dist/
 build/
-*.egg-info/ 
+*.egg-info/
+
+# API Keys
+api_keys.txt 

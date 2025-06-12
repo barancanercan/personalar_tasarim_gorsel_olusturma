@@ -11,28 +11,29 @@ from ..utils.config import (
 
 class GeminiHandler:
     def __init__(self, api_key: str):
-        """Initialize handler with API keys."""
+        """Initialize Gemini handler with API key."""
         genai.configure(api_key=api_key)
-        self.text_model = genai.GenerativeModel(GEMINI_TEXT_MODEL)
+        self.text_model = genai.GenerativeModel('gemini-1.5-flash')
+        self.vision_model = genai.GenerativeModel('gemini-1.5-flash-vision')
         self.hf_api_key = os.getenv("HUGGINGFACE_API_KEY")
 
-    def generate_text(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Generate text using Gemini Pro."""
+    def generate_text(self, prompt: str) -> str:
+        """Generate text using Gemini Flash."""
         try:
-            response = self.text_model.generate_content(
-                prompt,
-                generation_config={
-                    "temperature": kwargs.get("temperature", 0.95),
-                    "top_p": kwargs.get("top_p", 1),
-                    "top_k": kwargs.get("top_k", 32),
-                    "max_output_tokens": kwargs.get("max_output_tokens", 2048),
-                }
-            )
-            return {"success": True, "response": response}
+            response = self.text_model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            return f"Üzgünüm, bir hata oluştu: {str(e)}"
+
+    def generate_image(self, prompt: str) -> Dict[str, Any]:
+        """Generate image using Gemini Flash Vision."""
+        try:
+            response = self.vision_model.generate_content(prompt)
+            return {"success": True, "image_url": response.text}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def generate_image(self, prompt: str) -> Dict[str, Any]:
+    def generate_image_stable_diffusion(self, prompt: str) -> Dict[str, Any]:
         """Generate image using Stable Diffusion via Hugging Face API."""
         try:
             if not isinstance(prompt, str) or not prompt.strip():
