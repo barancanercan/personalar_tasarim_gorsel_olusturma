@@ -14,8 +14,8 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 
 ## 👥 Seçmen Personaları
 
-### 1. Geleneksel Muhafazakar Çekirdek
-![Geleneksel Muhafazakar Çekirdek](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/geleneksel_muhafazakar_cekirdek.png)
+### 1. Geleneksel Muhafazakar Çekirdek (Hatice Teyze)
+![Hatice Teyze](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/hatice_teyze.jpg)
 
 **Demografik Özellikler:**
 - 61 yaşında, evli, 4 kişilik aile
@@ -36,8 +36,8 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 - TikTok
 - WhatsApp
 
-### 2. Kentli Laik Modernler
-![Kentli Laik Modernler](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/kentli_laik_modernler.png)
+### 2. Kentli Laik Modernler (Kenan Bey)
+![Kenan Bey](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/kenan_bey.jpg)
 
 **Demografik Özellikler:**
 - 35-45 yaş arası
@@ -53,8 +53,8 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 - Çevre ve insan hakları hassasiyeti
 - Sivil toplum örgütlerine aktif katılım
 
-### 3. Ekonomik Kaygılı Milliyetçiler
-![Ekonomik Kaygılı Milliyetçiler](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/ekonomik_kaygili_milliyetciler.png)
+### 3. Ekonomik Kaygılı Milliyetçiler (Tuğrul Bey)
+![Tuğrul Bey](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/tugrul_bey.jpg)
 
 **Demografik Özellikler:**
 - 40-55 yaş arası
@@ -70,8 +70,8 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 - Güçlü aile bağları
 - Geleneksel değerlere saygılı
 
-### 4. Kararsız ve Sisteme Mesafeli Gençler
-![Kararsız ve Sisteme Mesafeli Gençler](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/kararsiz_ve_sisteme_mesafeli_gencler.png)
+### 4. Kararsız ve Sisteme Mesafeli Gençler (Elif)
+![Elif](https://raw.githubusercontent.com/barancanercan/personalar_tasarim_gorsel_olusturma/main/persona_profil_fotoğrafları/elif.jpg)
 
 **Demografik Özellikler:**
 - 18-30 yaş arası
