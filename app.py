@@ -292,7 +292,7 @@ def create_persona_card(persona):
             try:
                 if os.path.exists(image_path):
                     st.image(image_path, use_column_width=True)
-                    else:
+                else:
                     st.error(f"Resim bulunamadı: {image_path}")
                     st.image("https://via.placeholder.com/150", use_column_width=True)
             except Exception as e:
