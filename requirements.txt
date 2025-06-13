@@ -7,4 +7,7 @@ google-generativeai==0.3.2
 python-dotenv==1.0.1
 gTTS==2.5.1
 huggingface-hub>=0.21.4
-google-cloud-texttospeech 
+google-cloud-texttospeech
+tenacity>=8.2.3
+packaging>=23.2
+kaleido>=0.2.1 
