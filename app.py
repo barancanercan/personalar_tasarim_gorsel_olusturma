@@ -1,17 +1,10 @@
 import streamlit as st
-import plotly.express as px
-import plotly.graph_objects as go
-import pandas as pd
-import numpy as np
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import json
 from gtts import gTTS
-import base64
-import requests
-from PIL import Image
-import io
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -247,378 +240,202 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Persona data
-personas = {
-    "Hatice Teyze": {
-        "image": "persona_profil_fotograflari/hatice_teyze.jpg",
-        "description": "Geleneksel Muhafazakar Çekirdek",
-        "metrics": {
-            "Sosyal Medya Kullanımı": 0.3,
-            "Politik İlgi": 0.8,
-            "Ekonomik Endişe": 0.7,
-            "Kültürel Değerler": 0.9
-        },
-        "bio": [
-            "55 yaşında, ev hanımı",
-            "Geleneksel değerlere bağlı",
-            "Dini inançları güçlü",
-            "Aile odaklı yaşam tarzı"
-        ],
-        "topics": [
-            "Ekonomi ve geçim sıkıntısı",
-            "Aile değerleri",
-            "Dini ve kültürel konular",
-            "Güvenlik ve huzur"
-        ],
-        "adjectives": ["Muhafazakar", "Geleneksel", "Aile Odaklı", "Dindar"]
-    },
-    "Kenan Bey": {
-        "image": "persona_profil_fotograflari/kenan_bey.jpg",
-        "description": "Kentli Laik Modernler",
-        "metrics": {
-            "Sosyal Medya Kullanımı": 0.8,
-            "Politik İlgi": 0.6,
-            "Ekonomik Endişe": 0.5,
-            "Kültürel Değerler": 0.4
-        },
-        "bio": [
-            "45 yaşında, beyaz yakalı",
-            "Kentli ve modern yaşam tarzı",
-            "Laik ve seküler değerlere sahip",
-            "Profesyonel kariyer odaklı"
-        ],
-        "topics": [
-            "Ekonomik kalkınma",
-            "Demokrasi ve özgürlükler",
-            "Eğitim ve kültür",
-            "Uluslararası ilişkiler"
-        ],
-        "adjectives": ["Modern", "Laik", "Profesyonel", "Kentli"]
-    },
-    "Tuğrul Bey": {
-        "image": "persona_profil_fotograflari/tugrul_bey.jpg",
-        "description": "Ekonomik Kaygılı Milliyetçiler",
-        "metrics": {
-            "Sosyal Medya Kullanımı": 0.5,
-            "Politik İlgi": 0.7,
-            "Ekonomik Endişe": 0.9,
-            "Kültürel Değerler": 0.6
-        },
-        "bio": [
-            "50 yaşında, esnaf",
-            "Milliyetçi değerlere sahip",
-            "Ekonomik kaygıları yüksek",
-            "Yerel işletme sahibi"
-        ],
-        "topics": [
-            "Ekonomik kriz",
-            "Milli değerler",
-            "Yerel üretim",
-            "İşsizlik"
-        ],
-        "adjectives": ["Milliyetçi", "Esnaf", "Ekonomik Kaygılı", "Yerel"]
-    },
-    "Elif": {
-        "image": "persona_profil_fotograflari/elif.jpg",
-        "description": "Kararsız ve Sisteme Mesafeli Gençler",
-        "metrics": {
-            "Sosyal Medya Kullanımı": 0.9,
-            "Politik İlgi": 0.4,
-            "Ekonomik Endişe": 0.8,
-            "Kültürel Değerler": 0.3
-        },
-        "bio": [
-            "25 yaşında, üniversite öğrencisi",
-            "Sosyal medya bağımlısı",
-            "Sisteme karşı mesafeli",
-            "Gelecek kaygısı yüksek"
-        ],
-        "topics": [
-            "İş ve kariyer fırsatları",
-            "Sosyal medya trendleri",
-            "Gençlik sorunları",
-            "Gelecek endişeleri"
-        ],
-        "adjectives": ["Genç", "Sosyal Medya Bağımlısı", "Kararsız", "Modern"]
-    }
-}
+class Character:
+    def __init__(self, data):
+        for key, value in data.items():
+            setattr(self, key, value)
+        # Combine bio and lore for summary
+        bio = getattr(self, 'bio', [])
+        lore = getattr(self, 'lore', [])
+        if isinstance(bio, str):
+            bio = [bio]
+        if isinstance(lore, str):
+            lore = [lore]
+        self.bio_lore = bio + lore
+        # For backward compatibility
+        self.name = getattr(self, 'name', getattr(self, 'isim', None))
+        self.description = getattr(self, 'description', getattr(self, 'aciklama', ''))
+        self.metrics = getattr(self, 'metrics', getattr(self, 'metrikler', {}))
+        self.topics = getattr(self, 'topics', getattr(self, 'konular', []))
+        self.adjectives = getattr(self, 'adjectives', getattr(self, 'sifatlar', []))
+        self.image = getattr(self, 'profil_fotografi', getattr(self, 'image', None))
+        # Add gender attribute
+        self.gender = getattr(self, 'gender', 'female' if self.name in ['Hatice Teyze', 'Elif'] else 'male')
 
-# Function to create persona card
-def create_persona_card(name, data):
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(data["image"], width=200)
-    with col2:
-        st.markdown(f"### {name}")
-        st.markdown(f"**{data['description']}**")
-        st.markdown("---")
-        for metric, value in data["metrics"].items():
-            st.progress(value, text=metric)
+# Karakterleri JSON dosyalarından yükle
+def load_personas():
+    personas = {}
+    personas_dir = os.path.join(os.path.dirname(__file__), 'personas')
+    for filename in os.listdir(personas_dir):
+        if filename.endswith('.json'):
+            with open(os.path.join(personas_dir, filename), 'r', encoding='utf-8') as f:
+                persona_data = json.load(f)
+                persona = Character(persona_data)
+                personas[persona.name] = persona
+    return personas
+
+personas = load_personas()
+
+# Persona Card Template
+def create_persona_card(persona):
+    """Create a persona card with the specified structure"""
+    with st.expander(f"{persona.name}", expanded=True):
+        col1, col2 = st.columns([1, 2])
         
-        # Bio section
-        st.markdown("#### Temel Bilgiler")
-        for bio in data["bio"]:
-            st.markdown(f"- {bio}")
+        with col1:
+            # Resim gösterimi
+            turkish_chars = {'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c', 'İ': 'I', 'Ğ': 'G', 'Ü': 'U', 'Ş': 'S', 'Ö': 'O', 'Ç': 'C'}
+            name = persona.name.lower()
+            for turkish_char, latin_char in turkish_chars.items():
+                name = name.replace(turkish_char, latin_char)
+            image_path = f"persona_profil_fotograflari/{name.replace(' ', '_')}.jpg"
+            try:
+                if os.path.exists(image_path):
+                    st.image(image_path, use_column_width=True)
+                else:
+                    st.error(f"Resim bulunamadı: {image_path}")
+                    st.image("https://via.placeholder.com/150", use_column_width=True)
+            except Exception as e:
+                st.error(f"Resim yüklenirken hata oluştu: {str(e)}")
+                st.image("https://via.placeholder.com/150", use_column_width=True)
         
-        # Topics section
-        st.markdown("#### İlgilendiği Konular")
-        for topic in data["topics"]:
-            st.markdown(f"- {topic}")
-        
-        # Adjectives section
-        st.markdown("#### Öne Çıkan Özellikler")
-        for adj in data["adjectives"]:
-            st.markdown(f'<span class="tag">{adj}</span>', unsafe_allow_html=True)
+        with col2:
+            # İsim
+            st.markdown(f"### {persona.name}")
+            
+            # Biyografi
+            st.markdown("#### Biyografi")
+            for item in persona.bio:
+                st.markdown(f"- {item}")
+            
+            # Lore
+            st.markdown("#### Lore")
+            for item in persona.lore:
+                st.markdown(f"- {item}")
+            
+            # Knowledge
+            st.markdown("#### Knowledge")
+            for item in persona.knowledge:
+                st.markdown(f"- {item}")
+            
+            # Topics
+            st.markdown("#### Topics")
+            for item in persona.topics:
+                st.markdown(f"- {item}")
+            
+            # Style
+            st.markdown("#### Style")
+            
+            # All
+            st.markdown("##### All")
+            for item in persona.style['all']:
+                st.markdown(f"- {item}")
+            
+            # Chat
+            st.markdown("##### Chat")
+            for item in persona.style['chat']:
+                st.markdown(f"- {item}")
+            
+            # Post
+            st.markdown("##### Post")
+            for item in persona.style['post']:
+                st.markdown(f"- {item}")
+            
+            # Adjectives
+            st.markdown("#### Adjectives")
+            for item in persona.adjectives:
+                st.markdown(f"- {item}")
+            
+            # Clients
+            st.markdown("#### Clients")
+            for item in persona.clients:
+                st.markdown(f"- {item}")
 
-# Function to create metrics visualization
-def create_metrics_viz(persona_name, data):
-    metrics_df = pd.DataFrame({
-        'Metric': list(data["metrics"].keys()),
-        'Value': list(data["metrics"].values())
-    })
-    
-    fig = px.bar(metrics_df, x='Metric', y='Value',
-                 title=f"{persona_name} - Metrikler",
-                 color='Value',
-                 color_continuous_scale='RdYlBu_r')
-    
-    fig.update_layout(
-        showlegend=False,
-        plot_bgcolor='#1a1a1a',
-        paper_bgcolor='#1a1a1a',
-        font=dict(color='#f1f1f1'),
-        height=400
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+# PersonaGPT prompt function
+def get_persona_response(persona: Character, user_input):
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"Sen {persona.name} olarak yanıt ver. {persona.description}\n\n"
+        if persona.bio_lore:
+            prompt += ' '.join(persona.bio_lore) + "\n\n"
+        if persona.topics:
+            prompt += f"İlgilendiği Konular: {', '.join(persona.topics)}\n"
+        if persona.adjectives:
+            prompt += f"Öne Çıkan Özellikler: {', '.join(persona.adjectives)}\n"
+        if getattr(persona, 'modelProvider', None):
+            prompt += f"Model Sağlayıcı: {persona.modelProvider}\n"
+        if getattr(persona, 'clients', None):
+            prompt += f"Kullandığı Platformlar: {', '.join(persona.clients)}\n"
+        prompt += f"\nKullanıcı: {user_input}\n"
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"❌ Gemini API Hatası: {str(e)}\nLütfen API anahtarınızı ve model adını kontrol edin."
 
-# Function to create comparison visualization
-def create_comparison_viz(selected_personas):
-    comparison_data = []
-    for name in selected_personas:
-        for metric, value in personas[name]["metrics"].items():
-            comparison_data.append({
-                'Persona': name,
-                'Metric': metric,
-                'Value': value
-            })
-    
-    df = pd.DataFrame(comparison_data)
-    
-    fig = px.bar(df, x='Metric', y='Value', color='Persona',
-                 title='Persona Karşılaştırması',
-                 barmode='group')
-    
-    fig.update_layout(
-        plot_bgcolor='#1a1a1a',
-        paper_bgcolor='#1a1a1a',
-        font=dict(color='#f1f1f1'),
-        height=400
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-# Function to get persona response
-def get_persona_response(persona_name, user_input):
-    model = genai.GenerativeModel('gemini-pro')
-    
-    prompt = f"""Sen {persona_name} olarak yanıt ver. {personas[persona_name]['description']} 
-    özelliklerine sahip bir seçmen olarak düşün ve yanıtla. Kısa ve öz yanıtlar ver.
-    
-    Temel Bilgiler:
-    {', '.join(personas[persona_name]['bio'])}
-    
-    İlgilendiği Konular:
-    {', '.join(personas[persona_name]['topics'])}
-    
-    Kullanıcı: {user_input}
-    """
-    
-    response = model.generate_content(prompt)
-    return response.text
-
-# Function to text-to-speech
-def text_to_speech(text, lang='tr'):
-    tts = gTTS(text=text, lang=lang, slow=False)
+# Function to text-to-speech (female voice only)
+def text_to_speech(text, persona=None):
+    tts = gTTS(text=text, lang='tr', slow=False)
     audio_file = "temp_audio.mp3"
     tts.save(audio_file)
     return audio_file
 
+def download_chat_history(messages, persona_name):
+    if not messages:
+        return None
+    
+    # Create chat history text
+    chat_text = f"Konuşma Geçmişi - {persona_name}\n"
+    chat_text += f"Tarih: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+    chat_text += "=" * 50 + "\n\n"
+    
+    for message in messages:
+        role = "Kullanıcı" if message["role"] == "user" else persona_name
+        chat_text += f"{role}: {message['content']}\n\n"
+    
+    return chat_text
+
 # Main app
 def main():
     st.title("🗳️ Türk Seçmen Personaları")
-    
-    # Sidebar
     st.sidebar.title("Modüller")
-    module = st.sidebar.radio("Seçiniz:", ["PersonaGPT", "Analizler", "Persona Kartları"])
-    
+    module = st.sidebar.radio("Seçiniz:", ["PersonaGPT", "Persona Kartları"])
+
     if module == "PersonaGPT":
         st.header("🤖 PersonaGPT")
-        
-        # Persona selection
-        selected_persona = st.selectbox(
-            "Persona Seçin:",
-            list(personas.keys())
-        )
-        
-        # Chat interface
+        selected_persona_name = st.selectbox("Persona Seçin:", list(personas.keys()))
+        persona = personas[selected_persona_name]
         if "messages" not in st.session_state:
             st.session_state.messages = []
         
-        # Display chat history
+        # Add download button if there are messages
+        if st.session_state.messages:
+            chat_text = download_chat_history(st.session_state.messages, persona.name)
+            st.download_button(
+                label="📥 Konuşmayı İndir",
+                data=chat_text,
+                file_name=f"konusma_{persona.name}_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                mime="text/plain"
+            )
+        
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
         
-        # Chat input
         if prompt := st.chat_input("Mesajınızı yazın..."):
-            # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
-            
-            # Get persona response
-            response = get_persona_response(selected_persona, prompt)
-            
-            # Add persona response to chat history
+            response = get_persona_response(persona, prompt)
             st.session_state.messages.append({"role": "assistant", "content": response})
             with st.chat_message("assistant"):
                 st.markdown(response)
-                
-                # Text-to-speech
-                audio_file = text_to_speech(response)
-                st.audio(audio_file)
-    
-    elif module == "Analizler":
-        st.header("📊 Analizler")
-        
-        analysis_type = st.selectbox(
-            "Analiz Türü:",
-            ["Genel Bakış", "Detaylı Analiz", "Karşılaştırma"]
-        )
-        
-        if analysis_type == "Genel Bakış":
-            st.subheader("Tüm Personaların Genel Bakışı")
-            for name, data in personas.items():
-                create_metrics_viz(name, data)
-        
-        elif analysis_type == "Detaylı Analiz":
-            selected_persona = st.selectbox(
-                "Persona Seçin:",
-                list(personas.keys())
-            )
-            
-            # Create two columns for layout
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                # Display persona profile
-                st.image(personas[selected_persona]["image"], width=200)
-                st.markdown(f"### {selected_persona}")
-                st.markdown(f"**{personas[selected_persona]['description']}**")
-                
-                # Display metrics
-                st.markdown("#### Metrikler")
-                for metric, value in personas[selected_persona]["metrics"].items():
-                    st.progress(value, text=metric)
-            
-            with col2:
-                # Display bio
-                st.markdown("#### Temel Bilgiler")
-                for bio in personas[selected_persona]["bio"]:
-                    st.markdown(f"- {bio}")
-                
-                # Display topics
-                st.markdown("#### İlgilendiği Konular")
-                for topic in personas[selected_persona]["topics"]:
-                    st.markdown(f"- {topic}")
-                
-                # Display adjectives
-                st.markdown("#### Öne Çıkan Özellikler")
-                for adj in personas[selected_persona]["adjectives"]:
-                    st.markdown(f'<span class="tag">{adj}</span>', unsafe_allow_html=True)
-            
-            # Create metrics visualization
-            create_metrics_viz(selected_persona, personas[selected_persona])
-            
-            # Detaylı Analiz Bölümü
-            st.markdown("---")
-            st.subheader("📈 Detaylı Analiz")
-            
-            # Metriklerin Detaylı Açıklaması
-            st.markdown("#### Metriklerin Detaylı Açıklaması")
-            metrics_explanation = {
-                "Sosyal Medya Kullanımı": "Sosyal medya platformlarını kullanma sıklığı ve bağımlılık seviyesi",
-                "Politik İlgi": "Siyasi gelişmeleri takip etme ve ilgilenme düzeyi",
-                "Ekonomik Endişe": "Ekonomik durum ve gelecek kaygısı seviyesi",
-                "Kültürel Değerler": "Geleneksel ve kültürel değerlere bağlılık seviyesi"
-            }
-            
-            for metric, explanation in metrics_explanation.items():
-                value = personas[selected_persona]["metrics"][metric]
-                st.markdown(f"**{metric}** ({value:.1f})")
-                st.markdown(f"*{explanation}*")
-                st.markdown("---")
-            
-            # Davranış Analizi
-            st.markdown("#### 🎯 Davranış Analizi")
-            behavior_analysis = {
-                "Hatice Teyze": "Geleneksel değerlere bağlı, aile odaklı ve dini inançları güçlü bir profil. Ekonomik kaygıları yüksek ancak sosyal medya kullanımı düşük.",
-                "Kenan Bey": "Modern, laik ve profesyonel bir profil. Sosyal medya kullanımı yüksek, ekonomik kaygıları orta seviyede.",
-                "Tuğrul Bey": "Milliyetçi değerlere sahip, ekonomik kaygıları yüksek bir esnaf profili. Sosyal medya kullanımı orta seviyede.",
-                "Elif": "Sosyal medya bağımlısı, sisteme mesafeli ve gelecek kaygısı yüksek bir genç profil. Politik ilgisi düşük."
-            }
-            st.markdown(behavior_analysis[selected_persona])
-            
-            # Öneriler
-            st.markdown("#### 💡 Öneriler")
-            recommendations = {
-                "Hatice Teyze": [
-                    "Geleneksel değerleri ön plana çıkaran iletişim stratejisi",
-                    "Aile ve dini değerleri vurgulayan mesajlar",
-                    "Ekonomik güvence ve sosyal destek programları",
-                    "Yerel topluluk etkinlikleri ve buluşmaları"
-                ],
-                "Kenan Bey": [
-                    "Profesyonel ve modern bir iletişim dili",
-                    "Ekonomik kalkınma ve istihdam odaklı mesajlar",
-                    "Teknoloji ve inovasyon vurgusu",
-                    "Uluslararası standartlarda yaşam kalitesi"
-                ],
-                "Tuğrul Bey": [
-                    "Milli değerleri ön plana çıkaran mesajlar",
-                    "Yerel üretim ve esnaf destekleri",
-                    "Ekonomik istikrar ve güvenlik vurgusu",
-                    "Yerel kalkınma programları"
-                ],
-                "Elif": [
-                    "Sosyal medya odaklı iletişim stratejisi",
-                    "Gençlik programları ve kariyer fırsatları",
-                    "Modern ve yenilikçi yaklaşımlar",
-                    "Sosyal sorumluluk projeleri"
-                ]
-            }
-            
-            for rec in recommendations[selected_persona]:
-                st.markdown(f"- {rec}")
-        
-        else:  # Karşılaştırma
-            selected_personas = st.multiselect(
-                "Karşılaştırılacak Personaları Seçin:",
-                list(personas.keys()),
-                default=list(personas.keys())[:2]
-            )
-            if len(selected_personas) >= 2:
-                create_comparison_viz(selected_personas)
-            else:
-                st.warning("Lütfen en az iki persona seçin.")
-    
+            audio_file = text_to_speech(response, persona)
+            st.audio(audio_file)
+
     else:  # Persona Kartları
         st.header("👥 Persona Kartları")
-        
-        for name, data in personas.items():
-            with st.expander(f"{name} - {data['description']}"):
-                create_persona_card(name, data)
+        for persona in personas.values():
+            create_persona_card(persona)
 
 if __name__ == "__main__":
     main()
