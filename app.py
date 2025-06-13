@@ -291,13 +291,13 @@ def create_persona_card(persona):
             image_path = f"persona_profil_fotograflari/{name.replace(' ', '_')}.jpg"
             try:
                 if os.path.exists(image_path):
-                    st.image(image_path, use_column_width=True)
+                    st.image(image_path, use_container_width=True)
                 else:
                     st.error(f"Resim bulunamadı: {image_path}")
-                    st.image("https://via.placeholder.com/150", use_column_width=True)
+                    st.image("https://via.placeholder.com/150", use_container_width=True)
             except Exception as e:
                 st.error(f"Resim yüklenirken hata oluştu: {str(e)}")
-                st.image("https://via.placeholder.com/150", use_column_width=True)
+                st.image("https://via.placeholder.com/150", use_container_width=True)
         
         with col2:
             # İsim

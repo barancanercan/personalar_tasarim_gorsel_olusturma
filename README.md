@@ -9,6 +9,8 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 - **PersonaGPT**: Seçilen persona ile sohbet etme imkanı
 - **Sesli Sohbet**: Metin ve sesli sohbet seçenekleri
 - **Detaylı Metrikler**: Sosyal medya kullanımı, politik ilgi, ekonomik endişe ve kültürel değerler üzerine analizler
+- **Konuşma İndirme**: PersonaGPT sohbetlerini metin dosyası olarak indirme özelliği
+- **Responsive Tasarım**: Tüm ekran boyutlarına uyumlu modern arayüz
 
 ## 👥 Seçmen Personaları
 
@@ -91,12 +93,14 @@ Bu proje, Türk seçmenlerinin farklı profillerini analiz eden ve görselleşti
 - **Streamlit**: Modern ve interaktif web arayüzü
 - **Plotly**: Gelişmiş veri görselleştirme
 - **Custom CSS**: Özelleştirilmiş tasarım ve animasyonlar
+- **Responsive Layout**: Container-based responsive tasarım
 
 ### Backend
 - **Python**: Ana programlama dili
 - **Google Gemini API**: Yapay zeka entegrasyonu
 - **gTTS**: Metin-ses dönüşümü
 - **SpeechRecognition**: Ses tanıma
+- **Streamlit Chat**: Gelişmiş sohbet arayüzü
 
 ### Veri Analizi
 - **Pandas**: Veri manipülasyonu
@@ -124,18 +128,18 @@ streamlit run app.py
 
 1. Sol menüden bir modül seçin:
    - PersonaGPT: Persona ile sohbet
-   - Analizler: Seçmen profillerinin analizi
    - Persona Kartları: Detaylı persona bilgileri
 
-2. Persona seçin ve analiz türünü belirleyin:
-   - Genel Bakış
-   - Detaylı Analiz
-   - Karşılaştırma
-
-3. PersonaGPT'de:
+2. PersonaGPT'de:
    - Yazılı veya sesli sohbet seçeneğini kullanın
    - Persona ile etkileşime geçin
    - Yanıtları sesli olarak dinleyin
+   - Konuşma geçmişini indirin
+
+3. Persona Kartlarında:
+   - Detaylı persona bilgilerini görüntüleyin
+   - Profil fotoğraflarını inceleyin
+   - Biyografi, lore ve diğer detayları okuyun
 
 ## 🤝 Katkıda Bulunma
 
