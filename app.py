@@ -133,8 +133,8 @@ st.markdown("""
     }
 
     /* Profile Container Styles */
-    .profile-container {
-        text-align: center;
+            .profile-container {
+                text-align: center;
         margin: 24px 0;
         padding: 24px;
         background-color: #1a1a1a;
@@ -146,30 +146,30 @@ st.markdown("""
     .profile-container:hover {
         transform: translateY(-4px);
         box-shadow: 0 12px 20px rgba(0,0,0,0.3);
-    }
-    .profile-image {
+            }
+            .profile-image {
         width: 180px;
         height: 180px;
-        border-radius: 50%;
-        object-fit: cover;
+                border-radius: 50%;
+                object-fit: cover;
         border: 4px solid #4CAF50;
-        margin: 0 auto;
-        display: block;
+                margin: 0 auto;
+                display: block;
         box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         transition: all 0.3s ease;
     }
     .profile-image:hover {
         transform: scale(1.05);
         box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-    }
-    .profile-name {
-        color: #f1f1f1;
+            }
+            .profile-name {
+                color: #f1f1f1;
         font-size: 1.6em;
         margin-top: 20px;
         font-weight: 600;
-    }
-    .profile-bio {
-        color: #ccc;
+            }
+            .profile-bio {
+                color: #ccc;
         font-size: 1.1em;
         margin-top: 12px;
         padding: 0 24px;
@@ -186,14 +186,14 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .stChatMessage.user {
-        background-color: #4CAF50;
-        color: white;
+                background-color: #4CAF50;
+                color: white;
         margin-left: auto;
         border-bottom-right-radius: 4px;
     }
     .stChatMessage.assistant {
         background-color: #1a1a1a;
-        color: white;
+                color: white;
         margin-right: auto;
         border-bottom-left-radius: 4px;
         border: 1px solid #333;
@@ -201,7 +201,7 @@ st.markdown("""
 
     /* Section Headers */
     h1, h2, h3, h4, h5, h6 {
-        color: #f1f1f1;
+                color: #f1f1f1;
         font-weight: 600;
         margin-bottom: 16px;
     }
@@ -212,23 +212,23 @@ st.markdown("""
     }
     li {
         margin-bottom: 8px;
-        line-height: 1.6;
+                line-height: 1.6;
     }
 
     /* Tag Styles */
     .tag {
         background-color: #333;
-        color: white;
+                color: white;
         padding: 6px 12px;
         border-radius: 20px;
         margin: 4px;
         display: inline-block;
         font-size: 0.9em;
-        transition: all 0.3s ease;
-    }
+                transition: all 0.3s ease;
+            }
     .tag:hover {
-        background-color: #4CAF50;
-        transform: translateY(-2px);
+                background-color: #4CAF50;
+                transform: translateY(-2px);
     }
 
     /* Chart Styles */
@@ -236,10 +236,10 @@ st.markdown("""
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-</style>
-""", unsafe_allow_html=True)
-
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
 class Character:
     def __init__(self, data):
         for key, value in data.items():
@@ -292,7 +292,7 @@ def create_persona_card(persona):
             try:
                 if os.path.exists(image_path):
                     st.image(image_path, use_column_width=True)
-                else:
+                    else:
                     st.error(f"Resim bulunamadı: {image_path}")
                     st.image("https://via.placeholder.com/150", use_column_width=True)
             except Exception as e:
